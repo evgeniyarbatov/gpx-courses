@@ -12,6 +12,11 @@ OSM_GPX_CSV = data/osm-gpx.csv
 OSM_URL = https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
 COUNTRY_OSM_FILE = $$(basename $(OSM_URL))
 
+GPX_COMPRESSED_DIR = data/gpx_compressed
+
+GPX_FILES := $(wildcard $(GPX_DIR)/*.gpx)
+COMPRESSED_GPX_FILES := $(patsubst $(GPX_DIR)/%.gpx,$(GPX_COMPRESSED_DIR)/%.gpx,$(GPX_FILES))
+
 venv:
 	@python3 -m venv $(VENV_PATH)
 
@@ -19,10 +24,18 @@ install: venv
 	@source $(VENV_PATH)/bin/activate && \
 	pip install --disable-pip-version-check -q -r requirements.txt
 
+compress: $(COMPRESSED_GPX_FILES)
+
+$(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
+	@echo "Processing $< -> $@"
+	@gpsbabel -i gpx -f $< \
+	-x simplify,crosstrack,error=0.01k \
+	-o gpx -F $@
+
 extract:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/extract.py \
-	$(GPX_DIR) \
+	$(GPX_COMPRESSED_DIR) \
 	$(GPX_CSV)
 
 boundary:
