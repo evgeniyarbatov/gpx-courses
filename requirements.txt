@@ -2,3 +2,4 @@ pandas
 gpxpy
 geopandas
 shapely
+requests
