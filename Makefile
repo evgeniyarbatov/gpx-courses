@@ -5,6 +5,10 @@ GPX_DIR = /Users/zhenya/Documents/gpx/ecopark
 
 GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
+OSM_DIR = osm
+
+OSM_URL = https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
+COUNTRY_OSM_FILE = $$(basename $(OSM_URL))
 
 venv:
 	@python3 -m venv $(VENV_PATH)
@@ -24,3 +28,12 @@ boundary:
 	python3 scripts/boundary.py \
 	$(GPX_CSV) \
 	$(BOUNDARY_POLY)
+
+country:
+	if [ ! -f $(OSM_DIR)/$(COUNTRY_OSM_FILE) ]; then \
+		wget $(OSM_URL) -P $(OSM_DIR); \
+	fi
+
+osmextract:
+	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=$(BOUNDARY_POLY) -o=$(OSM_DIR)/gpx.osm.pbf
+	@osmium cat --overwrite $(OSM_DIR)/gpx.osm.pbf -o $(OSM_DIR)/gpx.osm
