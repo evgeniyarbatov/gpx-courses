@@ -5,7 +5,9 @@ GPX_DIR = /Users/zhenya/Documents/gpx/ecopark
 
 GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
+
 OSM_DIR = osm
+OSM_GPX_CSV = data/osm-gpx.csv
 
 OSM_URL = https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
 COUNTRY_OSM_FILE = $$(basename $(OSM_URL))
@@ -46,3 +48,9 @@ docker:
 	done
 	@docker stop $$(docker ps -a -q)
 	@docker compose up --build -d
+
+match:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/match.py \
+	$(GPX_CSV) \
+	$(OSM_GPX_CSV)
