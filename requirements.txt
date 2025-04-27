@@ -1,2 +1,4 @@
 pandas
 gpxpy
+geopandas
+shapely
