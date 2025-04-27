@@ -1,0 +1,51 @@
+services:
+  osrm_foot:
+    image: osrm-backend
+    volumes:
+      - ./osm/foot:/data
+      - ./profiles:/profiles
+    networks:
+      - default
+    ports:
+      - 6000:5000
+    restart: unless-stopped
+    command: >
+      bash -c "
+      osrm-extract -p /profiles/foot.lua /data/gpx.osm.pbf && 
+      osrm-partition /data/gpx.osrm && 
+      osrm-customize /data/gpx.osrm && 
+      osrm-routed \
+      --algorithm mld \
+      --max-matching-size 20000 \
+      --max-viaroute-size 20000 \
+      --max-trip-size 20000 \
+      --max-table-size 20000 \
+      /data/gpx.osrm
+      "
+  osrm_bicycle:
+    image: osrm-backend
+    volumes:
+      - ./osm/bicycle:/data
+      - ./profiles:/profiles
+    networks:
+      - default
+    ports:
+      - 6001:5000
+    restart: unless-stopped
+    command: >
+      bash -c "
+      osrm-extract -p /profiles/bicycle.lua /data/gpx.osm.pbf && 
+      osrm-partition /data/gpx.osrm && 
+      osrm-customize /data/gpx.osrm && 
+      osrm-routed \
+      --algorithm mld \
+      --max-matching-size 20000 \
+      --max-viaroute-size 20000 \
+      --max-trip-size 20000 \
+      --max-table-size 20000 \
+      /data/gpx.osrm
+      "
+
+networks:
+  default:
+    driver: bridge

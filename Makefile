@@ -35,5 +35,14 @@ country:
 	fi
 
 osmextract:
-	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=$(BOUNDARY_POLY) -o=$(OSM_DIR)/gpx.osm.pbf
-	@osmium cat --overwrite $(OSM_DIR)/gpx.osm.pbf -o $(OSM_DIR)/gpx.osm
+	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=$(BOUNDARY_POLY) -o=$(OSM_DIR)/foot/gpx.osm.pbf
+	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=$(BOUNDARY_POLY) -o=$(OSM_DIR)/bicycle/gpx.osm.pbf
+	@osmium cat --overwrite $(OSM_DIR)/foot/gpx.osm.pbf -o $(OSM_DIR)/gpx.osm
+
+docker:
+	@open -a Docker
+	@while ! docker info > /dev/null 2>&1; do \
+			sleep 1; \
+	done
+	@docker stop $$(docker ps -a -q)
+	@docker compose up --build -d
