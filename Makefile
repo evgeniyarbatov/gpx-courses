@@ -17,6 +17,10 @@ GPX_COMPRESSED_DIR = data/gpx_compressed
 GPX_FILES := $(wildcard $(GPX_DIR)/*.gpx)
 COMPRESSED_GPX_FILES := $(patsubst $(GPX_DIR)/%.gpx,$(GPX_COMPRESSED_DIR)/%.gpx,$(GPX_FILES))
 
+OSM_MATCH_PLOT = data/matched-osm.jpeg
+
+TRIP_CSV = data/trip.csv
+
 venv:
 	@python3 -m venv $(VENV_PATH)
 
@@ -67,3 +71,15 @@ match:
 	python3 scripts/match.py \
 	$(GPX_CSV) \
 	$(OSM_GPX_CSV)
+
+plot:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/plot.py \
+	$(OSM_GPX_CSV) \
+	$(OSM_MATCH_PLOT)
+
+trip:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/trip.py \
+	$(OSM_GPX_CSV) \
+	$(TRIP_CSV)

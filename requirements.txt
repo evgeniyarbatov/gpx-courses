@@ -3,3 +3,5 @@ gpxpy
 geopandas
 shapely
 requests
+matplotlib
+contextily
