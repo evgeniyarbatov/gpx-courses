@@ -22,6 +22,8 @@ OSM_MATCH_PLOT = data/matched-osm.jpeg
 TRIP_CSV = data/trip.csv
 TRIP_GPX = data/trip.gpx
 
+SIMPLIFIED_TRIP_GPX = data/simplified-trip.gpx
+
 venv:
 	@python3 -m venv $(VENV_PATH)
 
@@ -90,3 +92,8 @@ gpx:
 	python3 scripts/gpx.py \
 	$(TRIP_CSV) \
 	$(TRIP_GPX)
+
+simplifygpx:
+	@gpsbabel -i gpx -f $(TRIP_GPX) \
+	-x simplify,crosstrack,error=0.01k \
+	-o gpx -F $(SIMPLIFIED_TRIP_GPX)
