@@ -28,19 +28,20 @@ def get_matched_pair(coord1, coord2):
 def main(csv_file, matched_csv_file):
     df = pd.read_csv(csv_file)
     
-    matched_data = []
+    matched_data = set()
     for i in range(len(df) - 1):
         lat1, lon1 = df.iloc[i]['lat'], df.iloc[i]['lon']
         lat2, lon2 = df.iloc[i+1]['lat'], df.iloc[i+1]['lon']
         
-        matched_data.extend(
-            get_matched_pair(
-                (lat1, lon1),
-                (lat2, lon2),
-            ),
-        )    
+        matched_coords = get_matched_pair(
+            (lat1, lon1),
+            (lat2, lon2),
+        )
+        
+        for matched_coord in matched_coords:
+            matched_data.add(matched_coord)    
     
-    matched_df = pd.DataFrame(matched_data, columns=['lat', 'lon'])
+    matched_df = pd.DataFrame(list(matched_data), columns=['lat', 'lon'])
     
     matched_df.to_csv(matched_csv_file, index=False)
 
