@@ -4,7 +4,9 @@ import json
 
 import pandas as pd
 
-OSRM_URL = "http://localhost:6001/match/v1/bicycle/"
+from geopy.distance import geodesic
+
+OSRM_URL = "http://localhost:6001/trip/v1/bicycle/"
 
 def get_trip(df, trip_csv_file):
     coords = ';'.join(f"{row.lon},{row.lat}" for row in df.itertuples(index=False))
@@ -20,20 +22,51 @@ def get_trip(df, trip_csv_file):
     # with open(trip_csv_file, "w") as file:
     #     json.dump(trip_data, file, indent=4)
     
-    coords = []
-    if "tracepoints" in trip_data:
-        for tracepoint in trip_data["tracepoints"]:
-            if not tracepoint:
-                continue
-            
-            (lon, lat) = tracepoint["location"]
-            coords.append((lat, lon))
+    waypoints = trip_data['waypoints']
     
-    trip_df = pd.DataFrame(coords, columns=['lat', 'lon'])
+    sorted_waypoints = sorted(
+        waypoints,
+        key=lambda w: (w['trips_index'], w['waypoint_index'])
+    )
+    
+    coords = []
+    for waypoint in sorted_waypoints:
+        lat = waypoint['location'][1]
+        lon = waypoint['location'][0]
+        
+        trips_index = waypoint['trips_index']
+        
+        coords.append({
+            'trips_index': trips_index,
+            'lat': lat,
+            'lon': lon,
+        })
+    
+    trip_df = pd.DataFrame(coords)
     trip_df.to_csv(trip_csv_file, index=False)
+    
+def sort_df(df, start_lat, start_lon):
+    starting_point = (start_lat, start_lon)
+    
+    def calculate_distance(row):
+        return geodesic(starting_point, (row['lat'], row['lon'])).m
 
-def main(csv_file, trip_csv_file):
-    df = pd.read_csv(csv_file)
+    df['distance'] = df.apply(calculate_distance, axis=1)
+    df_sorted = df.sort_values(by='distance')
+    
+    df_sorted = df_sorted.drop(columns=['distance'])
+    return df_sorted
+    
+def main(
+    start_lat,
+    start_lon,
+    gpx_csv_file, 
+    trip_csv_file,
+):
+    df = pd.read_csv(gpx_csv_file)
+    
+    df = sort_df(df, start_lat, start_lon)
+    
     get_trip(df, trip_csv_file)
 
 if __name__ == "__main__":
