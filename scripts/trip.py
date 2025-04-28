@@ -29,8 +29,11 @@ def get_trip(df, trip_csv_file):
     df = pd.DataFrame(coordinates, columns=['lat', 'lon'])
     df.to_csv(trip_csv_file, index=False)
     
-def sort_df(df, start_lat, start_lon):
+def sort_df(df):
     geod = Geod(ellps="WGS84")
+
+    start_lat = df['lat'].mean()
+    start_lon = df['lon'].mean()
 
     def calculate_bearing(row):
         start_point = (start_lon, start_lat)
@@ -46,14 +49,12 @@ def sort_df(df, start_lat, start_lon):
     return df_sorted
     
 def main(
-    start_lat,
-    start_lon,
     gpx_csv_file, 
     trip_csv_file,
 ):
     df = pd.read_csv(gpx_csv_file)
     
-    df = sort_df(df, start_lat, start_lon)
+    df = sort_df(df)
     
     get_trip(df, trip_csv_file)
 
