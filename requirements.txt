@@ -6,3 +6,4 @@ requests
 matplotlib
 contextily
 geopy
+polyline

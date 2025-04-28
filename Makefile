@@ -92,5 +92,5 @@ trip:
 gpx:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/gpx.py \
-	$(ROUTE_CSV) \
+	$(TRIP_CSV) \
 	$(TRIP_GPX)
