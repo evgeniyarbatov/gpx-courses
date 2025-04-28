@@ -1,8 +1,6 @@
 PROJECT_NAME := $(shell basename $(PWD))
 VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
-START_LAT = 20.955832755945295 
-START_LON = 105.93093723389487
 GPX_DIR = /Users/zhenya/Documents/gpx/ecopark
 
 GPX_CSV = data/gpx.csv
@@ -84,8 +82,6 @@ plot:
 trip:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/trip.py \
-	$(START_LAT) \
-	$(START_LON) \
 	$(OSM_GPX_CSV) \
 	$(TRIP_CSV)
 
