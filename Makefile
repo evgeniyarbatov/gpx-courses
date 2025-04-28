@@ -22,6 +22,7 @@ COMPRESSED_GPX_FILES := $(patsubst $(GPX_DIR)/%.gpx,$(GPX_COMPRESSED_DIR)/%.gpx,
 OSM_MATCH_PLOT = data/matched-osm.jpeg
 
 TRIP_CSV = data/trip.csv
+TRIP_GPX = data/trip.gpx
 
 venv:
 	@python3 -m venv $(VENV_PATH)
@@ -87,3 +88,9 @@ trip:
 	$(START_LON) \
 	$(OSM_GPX_CSV) \
 	$(TRIP_CSV)
+
+gpx:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/gpx.py \
+	$(ROUTE_CSV) \
+	$(TRIP_GPX)
