@@ -5,7 +5,7 @@ import polyline
 
 import pandas as pd
 
-from geopy.distance import geodesic
+from pyproj import Geod
 
 OSRM_URL = "http://localhost:6000/trip/v1/foot/"
 
@@ -30,15 +30,19 @@ def get_trip(df, trip_csv_file):
     df.to_csv(trip_csv_file, index=False)
     
 def sort_df(df, start_lat, start_lon):
-    starting_point = (start_lat, start_lon)
-    
-    def calculate_distance(row):
-        return geodesic(starting_point, (row['lat'], row['lon'])).m
+    geod = Geod(ellps="WGS84")
 
-    df['distance'] = df.apply(calculate_distance, axis=1)
-    df_sorted = df.sort_values(by='distance')
+    def calculate_bearing(row):
+        start_point = (start_lon, start_lat)
+        target_point = (row['lon'], row['lat'])
+        fwd_azimuth, _, _  = geod.inv(start_point[0], start_point[1], target_point[0], target_point[1])
+        return fwd_azimuth
+
+    df['bearing'] = df.apply(calculate_bearing, axis=1)
     
-    df_sorted = df_sorted.drop(columns=['distance'])
+    df_sorted = df.sort_values(by='bearing')
+    df_sorted = df_sorted.drop(columns=['bearing'])
+    
     return df_sorted
     
 def main(
