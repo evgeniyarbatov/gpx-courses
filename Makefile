@@ -1,6 +1,8 @@
 PROJECT_NAME := $(shell basename $(PWD))
 VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
+START_LAT = 20.955832755945295 
+START_LON = 105.93093723389487
 GPX_DIR = /Users/zhenya/Documents/gpx/ecopark
 
 GPX_CSV = data/gpx.csv
@@ -8,6 +10,7 @@ BOUNDARY_POLY = data/boundary.poly
 
 OSM_DIR = osm
 OSM_GPX_CSV = data/osm-gpx.csv
+SORTED_OSM_GPX_CSV = data/sorted-osm-gpx.csv
 
 OSM_URL = https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
 COUNTRY_OSM_FILE = $$(basename $(OSM_URL))
@@ -81,10 +84,18 @@ plot:
 	$(OSM_GPX_CSV) \
 	$(OSM_MATCH_PLOT)
 
+sort:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/sort.py \
+	$(START_LAT) \
+	$(START_LON) \
+	$(OSM_GPX_CSV) \
+	$(SORTED_OSM_GPX_CSV)
+
 trip:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/trip.py \
-	$(OSM_GPX_CSV) \
+	$(SORTED_OSM_GPX_CSV) \
 	$(TRIP_CSV)
 
 gpx:

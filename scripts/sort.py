@@ -1,32 +1,9 @@
 import sys
 import requests
-import json
-import polyline
 
 import pandas as pd
 
-OSRM_TRIP_URL = "http://localhost:6000/trip/v1/foot/"
 OSRM_ROUTE_URL = "http://localhost:6000/route/v1/foot/"
-
-def get_trip(df, trip_csv_file):
-    coords = ';'.join(f"{row.lon},{row.lat}" for row in df.itertuples(index=False))
-
-    url = f"{OSRM_TRIP_URL}{coords}?geometries=polyline6&overview=full&annotations=false&steps=false"
-    response = requests.get(url)
-
-    if response.status_code != 200:
-        print(f"Error {response.status_code}: {response.text}")
-
-    trip_data = response.json()
-    
-    # with open(trip_csv_file, "w") as file:
-    #     json.dump(trip_data, file, indent=4)
-    
-    encoded_geometry = trip_data['trips'][0]['geometry']
-    coordinates = polyline.decode(encoded_geometry, precision=6) 
-    
-    df = pd.DataFrame(coordinates, columns=['lat', 'lon'])
-    df.to_csv(trip_csv_file, index=False)
 
 def get_osrm_route_distance(start_lat, start_lon, end_lat, end_lon):
     url = f"{OSRM_ROUTE_URL}{start_lon},{start_lat};{end_lon},{end_lat}?overview=false"
@@ -44,6 +21,8 @@ def sort_df(df, start_lat, start_lon):
     current_lon = start_lon
 
     while not df.empty:
+        print(len(df))
+        
         df['osrm_distance'] = df.apply(
             lambda row: get_osrm_route_distance(current_lat, current_lon, row['lat'], row['lon']),
             axis=1
@@ -58,20 +37,21 @@ def sort_df(df, start_lat, start_lon):
 
         df = df.drop(index=next_point_idx)
 
-    df_sorted = pd.DataFrame(sorted_rows).drop(columns=['osrm_distance'])
+    df_sorted = pd.DataFrame(sorted_rows)
+    
     return df_sorted
     
 def main(
     start_lat, 
     start_lon,
     gpx_csv_file, 
-    trip_csv_file,
+    sorted_gpx_csv_file,
 ):
     df = pd.read_csv(gpx_csv_file)
 
     df = sort_df(df, start_lat, start_lon)
 
-    get_trip(df, trip_csv_file)
+    df.to_csv(sorted_gpx_csv_file, index=False)
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
