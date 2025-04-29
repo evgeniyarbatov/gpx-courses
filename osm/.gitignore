@@ -1,4 +1,4 @@
 *
 !.gitignore
-!bicycle/
 !foot/
+!overpass-api/

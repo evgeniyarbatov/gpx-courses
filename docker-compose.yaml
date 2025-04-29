@@ -1,5 +1,5 @@
 services:
-  osrm_foot:
+  osrm:
     image: osrm-backend
     volumes:
       - ./osm/foot:/data
@@ -22,29 +22,23 @@ services:
       --max-table-size 20000 \
       /data/gpx.osrm
       "
-  osrm_bicycle:
-    image: osrm-backend
+
+  overpass-api:
+    image: wiktorn/overpass-api
+    container_name: overpass-api
     volumes:
-      - ./osm/bicycle:/data
-      - ./profiles:/profiles
+      - ./osm/overpass-api:/data
+    ports:
+      - "8000:80"
+    restart: unless-stopped
+    environment:
+      - OVERPASS_META=yes
+      - OVERPASS_MODE=init
+      - OVERPASS_PLANET_URL=file:///data/singapore.osm.bz2
+      - OVERPASS_RULES_LOAD=10
+      - OVERPASS_ALLOW_DUPLICATE_QUERIES=yes
     networks:
       - default
-    ports:
-      - 6001:5000
-    restart: unless-stopped
-    command: >
-      bash -c "
-      osrm-extract -p /profiles/bicycle.lua /data/gpx.osm.pbf && 
-      osrm-partition /data/gpx.osrm && 
-      osrm-customize /data/gpx.osrm && 
-      osrm-routed \
-      --algorithm mld \
-      --max-matching-size 20000 \
-      --max-viaroute-size 20000 \
-      --max-trip-size 20000 \
-      --max-table-size 20000 \
-      /data/gpx.osrm
-      "
 
 networks:
   default:
