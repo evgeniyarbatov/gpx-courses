@@ -6,7 +6,6 @@ import polyline
 import pandas as pd
 
 OSRM_TRIP_URL = "http://localhost:6000/trip/v1/foot/"
-OSRM_ROUTE_URL = "http://localhost:6000/route/v1/foot/"
 
 def get_trip(df, trip_csv_file):
     coords = ';'.join(f"{row.lon},{row.lat}" for row in df.itertuples(index=False))
@@ -27,49 +26,12 @@ def get_trip(df, trip_csv_file):
     
     df = pd.DataFrame(coordinates, columns=['lat', 'lon'])
     df.to_csv(trip_csv_file, index=False)
-
-def get_osrm_route_distance(start_lat, start_lon, end_lat, end_lon):
-    url = f"{OSRM_ROUTE_URL}{start_lon},{start_lat};{end_lon},{end_lat}?overview=false"
-    response = requests.get(url)
-    data = response.json()
-    if response.status_code == 200 and 'routes' in data:
-        return data['routes'][0]['distance']
-    else:
-        return float('inf')  # fallback if request fails
-    
-def sort_df(df, start_lat, start_lon):
-    df = df.copy()
-    sorted_rows = []
-    current_lat = start_lat
-    current_lon = start_lon
-
-    while not df.empty:
-        df['osrm_distance'] = df.apply(
-            lambda row: get_osrm_route_distance(current_lat, current_lon, row['lat'], row['lon']),
-            axis=1
-        )
-        
-        next_point_idx = df['osrm_distance'].idxmin()
-        next_point = df.loc[next_point_idx]
-
-        sorted_rows.append(next_point)
-
-        current_lat, current_lon = next_point['lat'], next_point['lon']
-
-        df = df.drop(index=next_point_idx)
-
-    df_sorted = pd.DataFrame(sorted_rows).drop(columns=['osrm_distance'])
-    return df_sorted
     
 def main(
-    start_lat, 
-    start_lon,
     gpx_csv_file, 
     trip_csv_file,
 ):
     df = pd.read_csv(gpx_csv_file)
-
-    df = sort_df(df, start_lat, start_lon)
 
     get_trip(df, trip_csv_file)
 

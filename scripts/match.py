@@ -1,5 +1,6 @@
 import sys
 import requests
+import json
 
 import pandas as pd
 
@@ -19,11 +20,13 @@ def get_matched_pair(coord1, coord2):
         if "tracepoints" in data:
             for tracepoint in data["tracepoints"]:
                 (lon, lat) = tracepoint["location"]
-                matched_coords.append((lat, lon))
+                
+                nodes = tracepoint["nodes"]
+                matched_coords.append((lat, lon, nodes))
 
         return matched_coords
     except requests.RequestException as e:
-        return [coord1, coord2] 
+        return [coord1, coord2, []] 
 
 def main(csv_file, matched_csv_file):
     df = pd.read_csv(csv_file)
@@ -41,7 +44,7 @@ def main(csv_file, matched_csv_file):
         for matched_coord in matched_coords:
             matched_data.add(matched_coord)    
     
-    matched_df = pd.DataFrame(list(matched_data), columns=['lat', 'lon'])
+    matched_df = pd.DataFrame(list(matched_data), columns=['lat', 'lon', 'nodes'])
     
     matched_df.to_csv(matched_csv_file, index=False)
 
