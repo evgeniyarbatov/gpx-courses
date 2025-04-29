@@ -22,7 +22,6 @@ services:
       --max-table-size 20000 \
       /data/gpx.osrm
       "
-
   overpass-api:
     image: wiktorn/overpass-api
     container_name: overpass-api
@@ -34,7 +33,7 @@ services:
     environment:
       - OVERPASS_META=yes
       - OVERPASS_MODE=init
-      - OVERPASS_PLANET_URL=file:///data/singapore.osm.bz2
+      - OVERPASS_PLANET_URL=file:///data/gpx.osm.bz2
       - OVERPASS_RULES_LOAD=10
       - OVERPASS_ALLOW_DUPLICATE_QUERIES=yes
     networks:
