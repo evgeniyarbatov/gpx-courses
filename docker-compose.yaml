@@ -36,6 +36,7 @@ services:
       - OVERPASS_PLANET_URL=file:///data/gpx.osm.bz2
       - OVERPASS_RULES_LOAD=10
       - OVERPASS_ALLOW_DUPLICATE_QUERIES=yes
+      - OVERPASS_PLANET_PREPROCESS=chmod og+rx /db
     networks:
       - default
 

@@ -26,7 +26,6 @@ def get_ways(nodes):
         way(bn);
         out ids;
     """
-    print(overpass_query)
     response = requests.get(
         "http://localhost:8000/api/interpreter", 
         params={'data': overpass_query}
@@ -53,30 +52,31 @@ def get_matched_pair(coord1, coord2):
                 nodes = get_nodes(lat, lon)
                 ways = get_ways(nodes)
                 
-                matched_coords.append((lat, lon, ways))
+                matched_coords.append([lat, lon, ways])
         return matched_coords
     except requests.RequestException as e:
-        return [coord1, coord2, []] 
+        return None
 
 def main(csv_file, matched_csv_file):
     df = pd.read_csv(csv_file)
-    
-    matched_data = set()
+
+    matched_data = []
     for i in range(len(df) - 1):
         lat1, lon1 = df.iloc[i]['lat'], df.iloc[i]['lon']
-        lat2, lon2 = df.iloc[i+1]['lat'], df.iloc[i+1]['lon']
+        lat2, lon2 = df.iloc[i + 1]['lat'], df.iloc[i + 1]['lon']
+
+        matched_coords = get_matched_pair((lat1, lon1), (lat2, lon2))
+        if not matched_coords:
+            continue
         
-        matched_coords = get_matched_pair(
-            (lat1, lon1),
-            (lat2, lon2),
-        )
-        print(matched_coords)
-        
-        for matched_coord in matched_coords:
-            matched_data.add(matched_coord)    
-    
-    matched_df = pd.DataFrame(list(matched_data), columns=['lat', 'lon', 'ways'])
-    
+        for coord in matched_coords:
+            matched_data.append({
+                'lat': coord[0],
+                'lon': coord[1],
+                'ways': coord[2],
+            })
+
+    matched_df = pd.DataFrame(matched_data)
     matched_df.to_csv(matched_csv_file, index=False)
 
 if __name__ == "__main__":
