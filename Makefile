@@ -10,6 +10,7 @@ BOUNDARY_POLY = data/boundary.poly
 
 OSM_DIR = osm
 OSM_GPX_CSV = data/osm-gpx.csv
+FILTERED_OSM_GPX_CSV = data/filtered-osm-gpx.csv
 SORTED_OSM_GPX_CSV = data/sorted-osm-gpx.csv
 
 OSM_URL = https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
@@ -78,10 +79,16 @@ match:
 	$(GPX_CSV) \
 	$(OSM_GPX_CSV)
 
+filter:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/filter.py \
+	$(OSM_GPX_CSV) \
+	$(FILTERED_OSM_GPX_CSV)
+
 plot:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plot.py \
-	$(OSM_GPX_CSV) \
+	$(FILTERED_OSM_GPX_CSV) \
 	$(OSM_MATCH_PLOT)
 
 sort:
@@ -89,7 +96,7 @@ sort:
 	python3 scripts/sort.py \
 	$(START_LAT) \
 	$(START_LON) \
-	$(OSM_GPX_CSV) \
+	$(FILTERED_OSM_GPX_CSV) \
 	$(SORTED_OSM_GPX_CSV)
 
 trip:

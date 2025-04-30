@@ -1,5 +1,6 @@
 import sys
 import requests
+import ast
 
 import pandas as pd
 
@@ -16,19 +17,32 @@ def get_osrm_route_distance(start_lat, start_lon, end_lat, end_lon):
     
 def sort_df(df, start_lat, start_lon):
     df = df.copy()
+    df['ways'] = df['ways'].apply(ast.literal_eval)
+    
     sorted_rows = []
     current_lat = start_lat
     current_lon = start_lon
 
     while not df.empty:
         print(len(df))
-        
-        df['osrm_distance'] = df.apply(
+
+        if sorted_rows:
+            current_ways = sorted_rows[-1]['ways']
+        else:
+            current_ways = []
+
+        df['shares_way'] = df['ways'].apply(lambda ws: any(w in current_ways for w in ws))
+
+        shared_way_df = df[df['shares_way']]
+        candidate_df = shared_way_df if not shared_way_df.empty else df
+        candidate_df = candidate_df.copy()
+
+        candidate_df['osrm_distance'] = candidate_df.apply(
             lambda row: get_osrm_route_distance(current_lat, current_lon, row['lat'], row['lon']),
             axis=1
         )
-        
-        next_point_idx = df['osrm_distance'].idxmin()
+
+        next_point_idx = candidate_df['osrm_distance'].idxmin()
         next_point = df.loc[next_point_idx]
 
         sorted_rows.append(next_point)
@@ -36,9 +50,8 @@ def sort_df(df, start_lat, start_lon):
         current_lat, current_lon = next_point['lat'], next_point['lon']
 
         df = df.drop(index=next_point_idx)
-
+        
     df_sorted = pd.DataFrame(sorted_rows)
-    
     return df_sorted
     
 def main(
