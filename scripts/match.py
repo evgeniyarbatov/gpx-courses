@@ -77,6 +77,9 @@ def main(csv_file, matched_csv_file):
             })
 
     matched_df = pd.DataFrame(matched_data)
+    
+    matched_df = matched_df.drop_duplicates()
+    
     matched_df.to_csv(matched_csv_file, index=False)
 
 if __name__ == "__main__":
