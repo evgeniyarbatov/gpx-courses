@@ -3,7 +3,28 @@ import ast
 
 import pandas as pd
 
-def filter_df(df):
+from geopy.distance import geodesic
+
+def filter_by_distance(df):
+    filtered = [df.iloc[0]]
+    
+    for idx in range(1, len(df)):
+        current_point = (df.iloc[idx]['lat'], df.iloc[idx]['lon'])
+        too_close = False
+        
+        for kept in filtered:
+            kept_point = (kept['lat'], kept['lon'])
+            if geodesic(current_point, kept_point).meters <= 50:
+                too_close = True
+                break
+        
+        if not too_close:
+            filtered.append(df.iloc[idx])
+    
+    filtered_df = pd.DataFrame(filtered)
+    return filtered_df
+
+def filter_by_ways(df):
     df['ways'] = df['ways'].apply(lambda x: [int(w) for w in ast.literal_eval(x)])
     exploded = df.explode('ways')
 
@@ -23,7 +44,8 @@ def main(
 ):
     df = pd.read_csv(gpx_csv_file)
 
-    df = filter_df(df)
+    df = filter_by_ways(df)
+    df = filter_by_distance(df)
 
     df.to_csv(filtered_gpx_csv_file, index=False)
 
