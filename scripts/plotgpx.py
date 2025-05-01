@@ -9,7 +9,7 @@ import contextily as ctx
 
 from shapely.geometry import LineString
 
-def plot(gpx_files, gpx_plot_filename):
+def plot(gpx_files, title, gpx_plot_filename):
     colors = plt.get_cmap('tab20', len(gpx_files))
 
     gdfs = []
@@ -32,21 +32,28 @@ def plot(gpx_files, gpx_plot_filename):
 
     fig, ax = plt.subplots(figsize=(12, 10))
     for gdf, color in gdfs:
-        gdf.to_crs(epsg=3857).plot(ax=ax, color=color, linewidth=2, label=gdf["name"].iloc[0])
+        gdf.to_crs(epsg=3857).plot(ax=ax, color=color, linewidth=5, label=gdf["name"].iloc[0])
         
     ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron)
 
+    ax.set_aspect('equal', adjustable='datalim')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False)
+
     plt.legend()
     plt.tight_layout()
+    plt.title(title)
     plt.savefig(gpx_plot_filename, dpi=300, bbox_inches='tight')
         
 def main(
     gpx_dir,
+    title,
     gpx_plot_filename, 
 ):
     gpx_files = glob.glob(os.path.join(gpx_dir, "*.gpx"))
     
-    plot(gpx_files, gpx_plot_filename)
+    plot(gpx_files, title, gpx_plot_filename)
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
