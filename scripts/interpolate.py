@@ -6,6 +6,8 @@ import pandas as pd
 from shapely.geometry import LineString, Point
 from pyproj import Geod
 
+INTERPOLATE_DISTANCE_METERS = 5
+
 geod = Geod(ellps="WGS84")
 
 def interpolate_way(way_id, coords):
@@ -16,9 +18,9 @@ def interpolate_way(way_id, coords):
     length = geod.geometry_length(line)
     
     result = []
-    for dist_m in range(0, int(length), 1):
+    for dist_m in range(0, int(length), INTERPOLATE_DISTANCE_METERS):
         point = line.interpolate(dist_m / length, normalized=True)
-        result.append((point.y, point.x, way_id))
+        result.append((point.y, point.x, [way_id]))
 
     return result
 
@@ -57,7 +59,7 @@ def main(
         points = interpolate_way(way_id, nodes)
         all_points.extend(points)
 
-    result_df = pd.DataFrame(all_points, columns=['lat', 'lon', 'way_id'])
+    result_df = pd.DataFrame(all_points, columns=['lat', 'lon', 'ways'])
     result_df.to_csv(interpolated_filename, index=False)
     
 if __name__ == "__main__":

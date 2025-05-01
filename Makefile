@@ -105,7 +105,7 @@ interpolate:
 plot:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plot.py \
-	$(FILTERED_OSM_GPX_CSV) \
+	$(INTERPOLATED_OSM_GPX_CSV) \
 	$(OSM_MATCH_PLOT)
 
 sort:
@@ -113,7 +113,7 @@ sort:
 	python3 scripts/sort.py \
 	$(START_LAT) \
 	$(START_LON) \
-	$(FILTERED_OSM_GPX_CSV) \
+	$(INTERPOLATED_OSM_GPX_CSV) \
 	$(SORTED_OSM_GPX_CSV)
 
 trip:
