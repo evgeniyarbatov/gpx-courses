@@ -1,5 +1,6 @@
 import sys
 import ast
+import csv
 
 import pandas as pd
 
@@ -11,11 +12,18 @@ MIN_WAY_LENGTH_METERS = 200
 
 geod = Geod(ellps="WGS84")
 
-def interpolate_way(way_id, coords):
-    if len(coords) < 2:
+def find_closest_index(line_coords, target):
+    return min(range(len(line_coords)), key=lambda i: Point(line_coords[i][1], line_coords[i][0]).distance(Point(target[1], target[0])))
+
+def interpolate_way(way_id, way_coords, points_by_way):    
+    indices = [find_closest_index(way_coords, pt) for pt in points_by_way[way_id]]
+    start_idx, stop_idx = min(indices), max(indices)
+
+    segment_coords = way_coords[start_idx:stop_idx+1]
+    if len(segment_coords) < 2:
         return []
 
-    line = LineString([(lon, lat) for lat, lon in coords])
+    line = LineString([(lon, lat) for lat, lon in segment_coords])
     
     length = geod.geometry_length(line)
     if length < MIN_WAY_LENGTH_METERS:
@@ -47,6 +55,20 @@ def get_way_nodes(way_id, osm_ways_df):
     
     return nodes    
 
+def get_points_by_way(csv_file):
+    points_by_way = {}
+
+    with open(csv_file, newline='') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            lat = float(row["lat"])
+            lon = float(row["lon"])
+            way_ids = ast.literal_eval(row["ways"])
+            for way_id in way_ids:
+                points_by_way.setdefault(way_id, []).append((lat, lon))
+                
+    return points_by_way    
+    
 def main(
     osm_ways_filename,
 	gpx_csv_file,
@@ -56,11 +78,12 @@ def main(
     gpx_df = pd.read_csv(gpx_csv_file)
     
     all_points = []
+    points_by_way = get_points_by_way(gpx_csv_file)
     
     ways = get_ways(gpx_df)
     for way_id in ways:
         nodes = get_way_nodes(way_id, osm_ways_df)
-        points = interpolate_way(way_id, nodes)
+        points = interpolate_way(way_id, nodes, points_by_way)
         
         if points:
             all_points.extend(points)
