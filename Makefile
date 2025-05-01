@@ -39,6 +39,12 @@ install: venv
 	@source $(VENV_PATH)/bin/activate && \
 	pip install --disable-pip-version-check -q -r requirements.txt
 
+plotgpx:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/plotgpx.py \
+	$(GPX_DIR) \
+	data/original-gpx.jpeg
+
 compress: $(COMPRESSED_GPX_FILES)
 
 $(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
