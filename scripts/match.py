@@ -23,7 +23,7 @@ def get_ways(nodes):
     overpass_query = f"""
         [out:json];
         node(id:{node_1},{node_2});
-        way(bn)["highway"~"^(pedestrian|footway|residential|path|track)$"]
+        way(bn)["highway"~"^(pedestrian|footway|residential|path)$"]
         ["crossing"!~"traffic_signals"]
         ["footway"!~"crossing"];
         out ids;
