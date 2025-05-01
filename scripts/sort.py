@@ -17,13 +17,28 @@ def get_osrm_route_distance(start_lat, start_lon, end_lat, end_lon):
     else:
         return float('inf')  # fallback if request fails
     
+def get_closest_point_in_straight_line(df, lat, lon):
+    df['distance'] = df.apply(
+        lambda row: haversine((lat, lon), (row['lat'], row['lon'])),
+        axis=1
+    )
+    
+    closest_point_idx = df['distance'].idxmin()
+    closest_point = df.loc[closest_point_idx]
+
+    return closest_point['lat'], closest_point['lon']
+
 def sort_df(df, start_lat, start_lon):
     df = df.copy()
     df['ways'] = df['ways'].apply(lambda x: [int(w) for w in ast.literal_eval(x)])
 
     sorted_rows = []
-    current_lat = start_lat
-    current_lon = start_lon
+    
+    current_lat, current_lon = get_closest_point_in_straight_line(
+        df, 
+        start_lat, 
+        start_lon,
+    )
 
     while not df.empty:
         print(len(df))
@@ -67,7 +82,7 @@ def main(
 ):
     df = pd.read_csv(gpx_csv_file)
 
-    df = sort_df(df, start_lat, start_lon)
+    df = sort_df(df, float(start_lat), float(start_lon))
 
     df.to_csv(sorted_gpx_csv_file, index=False)
 
