@@ -4,16 +4,17 @@ import ast
 import pandas as pd
 
 def filter_df(df):
-    df['ways'] = df['ways'].apply(ast.literal_eval)
+    df['ways'] = df['ways'].apply(lambda x: [int(w) for w in ast.literal_eval(x)])
     exploded = df.explode('ways')
 
     way_counts = exploded['ways'].value_counts()
-    p50 = way_counts.quantile(0.5)
-    
-    popular_ways = set(way_counts[way_counts > p50].index)    
-    df['has_popular_way'] = df['ways'].apply(lambda ways: any(way in popular_ways for way in ways))
+    common_ways = set(way_counts[way_counts > 1].index)
 
-    filtered_df = df[df['has_popular_way']].drop(columns='has_popular_way')
+    df['has_common_way'] = df['ways'].apply(
+        lambda ways: all(way in common_ways for way in ways)
+    )
+    filtered_df = df[df['has_common_way']].drop(columns='has_common_way')
+    
     return filtered_df
 
 def main(

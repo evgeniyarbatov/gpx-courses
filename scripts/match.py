@@ -23,7 +23,9 @@ def get_ways(nodes):
     overpass_query = f"""
         [out:json];
         node(id:{node_1},{node_2});
-        way(bn);
+        way(bn)["highway"~"^(pedestrian|footway|residential|path|track)$"]
+        ["crossing"!~"traffic_signals"]
+        ["footway"!~"crossing"];
         out ids;
     """
     response = requests.get(
@@ -70,10 +72,14 @@ def main(csv_file, matched_csv_file):
             continue
         
         for coord in matched_coords:
+            lat, lon, ways = coord[0], coord[1], coord[2]
+            if not ways:
+                continue
+            
             matched_data.append({
-                'lat': coord[0],
-                'lon': coord[1],
-                'ways': coord[2],
+                'lat': lat,
+                'lon': lon,
+                'ways': ways,
             })
 
     matched_df = pd.DataFrame(matched_data)
