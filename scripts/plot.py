@@ -1,6 +1,4 @@
 import sys
-import os
-import ast
 
 import pandas as pd
 import matplotlib.pyplot as plt

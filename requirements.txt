@@ -8,3 +8,4 @@ contextily
 geopy
 polyline
 pyproj
+osmium
