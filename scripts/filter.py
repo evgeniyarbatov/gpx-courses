@@ -5,6 +5,8 @@ import pandas as pd
 
 from geopy.distance import geodesic
 
+FILTER_DISTANCE_METERS = 50
+
 def filter_by_distance(df):
     filtered = [df.iloc[0]]
     
@@ -14,7 +16,7 @@ def filter_by_distance(df):
         
         for kept in filtered:
             kept_point = (kept['lat'], kept['lon'])
-            if geodesic(current_point, kept_point).meters <= 50:
+            if geodesic(current_point, kept_point).meters <= FILTER_DISTANCE_METERS:
                 too_close = True
                 break
         
