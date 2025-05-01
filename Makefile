@@ -43,12 +43,12 @@ plotgpx:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plotgpx.py \
 	$(GPX_DIR) \
+	"Original GPX" \
 	data/original-gpx.jpeg
 
 compress: $(COMPRESSED_GPX_FILES)
 
 $(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
-	@echo "Processing $< -> $@"
 	@gpsbabel -i gpx -f $< \
 	-x simplify,crosstrack,error=0.01k \
 	-o gpx -F $@
@@ -58,6 +58,12 @@ extract:
 	python3 scripts/extract.py \
 	$(GPX_COMPRESSED_DIR) \
 	$(GPX_CSV)
+
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/plotgpx.py \
+	$(GPX_COMPRESSED_DIR) \
+	"Simplified GPX" \
+	data/simplified-gpx.jpeg
 
 boundary:
 	@source $(VENV_PATH)/bin/activate && \
@@ -138,3 +144,9 @@ simplifygpx:
 	@gpsbabel -i gpx -f $(TRIP_GPX) \
 	-x simplify,crosstrack,error=0.01k \
 	-o gpx -F $(SIMPLIFIED_TRIP_GPX)
+
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/plotgpx.py \
+	$(GPX_COMPRESSED_DIR) \
+	"Trip GPX" \
+	data/trip-gpx.jpeg	
