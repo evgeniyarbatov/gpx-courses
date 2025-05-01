@@ -4,6 +4,8 @@ import ast
 
 import pandas as pd
 
+from haversine import haversine
+
 OSRM_ROUTE_URL = "http://localhost:6000/route/v1/foot/"
 
 def get_osrm_route_distance(start_lat, start_lon, end_lat, end_lon):
@@ -18,7 +20,7 @@ def get_osrm_route_distance(start_lat, start_lon, end_lat, end_lon):
 def sort_df(df, start_lat, start_lon):
     df = df.copy()
     df['ways'] = df['ways'].apply(lambda x: [int(w) for w in ast.literal_eval(x)])
-    
+
     sorted_rows = []
     current_lat = start_lat
     current_lon = start_lon
@@ -32,28 +34,31 @@ def sort_df(df, start_lat, start_lon):
             current_ways = df.iloc[0]['ways']
 
         df['shares_way'] = df['ways'].apply(lambda ws: any(w in current_ways for w in ws))
-
         shared_way_df = df[df['shares_way']]
+        
         candidate_df = shared_way_df if not shared_way_df.empty else df
         candidate_df = candidate_df.copy()
 
-        candidate_df['osrm_distance'] = candidate_df.apply(
-            lambda row: get_osrm_route_distance(current_lat, current_lon, row['lat'], row['lon']),
-            axis=1
-        )
+        if not shared_way_df.empty:
+            candidate_df['distance'] = candidate_df.apply(
+                lambda row: get_osrm_route_distance(current_lat, current_lon, row['lat'], row['lon']),
+                axis=1
+            )
+        else:
+            candidate_df['distance'] = candidate_df.apply(
+                lambda row: haversine((current_lat, current_lon), (row['lat'], row['lon'])),
+                axis=1
+            )
 
-        next_point_idx = candidate_df['osrm_distance'].idxmin()
+        next_point_idx = candidate_df['distance'].idxmin()
         next_point = df.loc[next_point_idx]
 
         sorted_rows.append(next_point)
-
         current_lat, current_lon = next_point['lat'], next_point['lon']
-
         df = df.drop(index=next_point_idx)
+
+    return pd.DataFrame(sorted_rows)
         
-    df_sorted = pd.DataFrame(sorted_rows)
-    return df_sorted
-    
 def main(
     start_lat, 
     start_lon,
