@@ -8,7 +8,6 @@ from shapely.geometry import LineString, Point
 from pyproj import Geod
 
 INTERPOLATE_DISTANCE_METERS = 10
-MIN_WAY_LENGTH_METERS = 200
 
 geod = Geod(ellps="WGS84")
 
@@ -24,11 +23,8 @@ def interpolate_way(way_id, way_coords, points_by_way):
         return []
 
     line = LineString([(lon, lat) for lat, lon in segment_coords])
-    
     length = geod.geometry_length(line)
-    if length < MIN_WAY_LENGTH_METERS:
-        return []
-    
+
     result = []
     for dist_m in range(0, int(length), INTERPOLATE_DISTANCE_METERS):
         point = line.interpolate(dist_m / length, normalized=True)

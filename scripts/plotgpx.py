@@ -34,7 +34,7 @@ def plot(gpx_files, title, gpx_plot_filename):
     for gdf, color in gdfs:
         gdf.to_crs(epsg=3857).plot(ax=ax, color=color, linewidth=5, label=gdf["name"].iloc[0])
         
-    ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron)
+    ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron, attribution=False)
 
     ax.set_aspect('equal', adjustable='datalim')
     ax.set_xticks([])
