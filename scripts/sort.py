@@ -17,7 +17,7 @@ def get_osrm_route_distance(start_lat, start_lon, end_lat, end_lon):
     
 def sort_df(df, start_lat, start_lon):
     df = df.copy()
-    df['ways'] = df['ways'].apply(ast.literal_eval)
+    df['ways'] = df['ways'].apply(lambda x: [int(w) for w in ast.literal_eval(x)])
     
     sorted_rows = []
     current_lat = start_lat
@@ -29,7 +29,7 @@ def sort_df(df, start_lat, start_lon):
         if sorted_rows:
             current_ways = sorted_rows[-1]['ways']
         else:
-            current_ways = []
+            current_ways = df.iloc[0]['ways']
 
         df['shares_way'] = df['ways'].apply(lambda ws: any(w in current_ways for w in ws))
 
