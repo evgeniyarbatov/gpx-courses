@@ -9,8 +9,12 @@ GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
 
 OSM_DIR = osm
+
+OSM_WAYS = data/osm-ways.csv
+
 OSM_GPX_CSV = data/osm-gpx.csv
 FILTERED_OSM_GPX_CSV = data/filtered-osm-gpx.csv
+INTERPOLATED_OSM_GPX_CSV = data/interpolated-osm-gpx.csv
 SORTED_OSM_GPX_CSV = data/sorted-osm-gpx.csv
 
 OSM_URL = https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
@@ -63,7 +67,13 @@ country:
 osmextract:
 	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=$(BOUNDARY_POLY) -o=$(OSM_DIR)/foot/gpx.osm.pbf
 	@osmium cat --overwrite $(OSM_DIR)/foot/gpx.osm.pbf -o $(OSM_DIR)/gpx.osm
+
 	@bzip2 -c $(OSM_DIR)/gpx.osm > $(OSM_DIR)/overpass-api/gpx.osm.bz2
+
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/ways.py \
+	$(OSM_DIR)/gpx.osm \
+	$(OSM_WAYS)
 
 docker:
 	@open -a Docker
@@ -84,6 +94,13 @@ filter:
 	python3 scripts/filter.py \
 	$(OSM_GPX_CSV) \
 	$(FILTERED_OSM_GPX_CSV)
+
+interpolate:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/interpolate.py \
+	$(OSM_WAYS) \
+	$(FILTERED_OSM_GPX_CSV) \
+	$(INTERPOLATED_OSM_GPX_CSV)
 
 plot:
 	@source $(VENV_PATH)/bin/activate && \
