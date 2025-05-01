@@ -101,11 +101,23 @@ match:
 	$(GPX_CSV) \
 	$(OSM_GPX_CSV)
 
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/plot.py \
+	$(OSM_GPX_CSV) \
+	"OSM Match and Overpass API Filter" \
+	data/osm-match.jpeg
+
 filter:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/filter.py \
 	$(OSM_GPX_CSV) \
 	$(FILTERED_OSM_GPX_CSV)
+
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/plot.py \
+	$(FILTERED_OSM_GPX_CSV) \
+	"Filter by Way Count and Distance between Points" \
+	data/osm-filter.jpeg
 
 interpolate:
 	@source $(VENV_PATH)/bin/activate && \
@@ -114,11 +126,11 @@ interpolate:
 	$(FILTERED_OSM_GPX_CSV) \
 	$(INTERPOLATED_OSM_GPX_CSV)
 
-plot:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plot.py \
 	$(INTERPOLATED_OSM_GPX_CSV) \
-	$(OSM_MATCH_PLOT)
+	"Interpolate OSM Ways" \
+	data/osm-interpolate.jpeg
 
 sort:
 	@source $(VENV_PATH)/bin/activate && \
@@ -133,6 +145,12 @@ trip:
 	python3 scripts/trip.py \
 	$(SORTED_OSM_GPX_CSV) \
 	$(TRIP_CSV)
+
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/plot.py \
+	$(TRIP_CSV) \
+	"Trip GPX" \
+	data/trip-gpx.jpeg
 
 gpx:
 	@source $(VENV_PATH)/bin/activate && \
