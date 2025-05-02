@@ -4,6 +4,7 @@ VENV_PATH = ~/.venv/$(PROJECT_NAME)
 START_LAT = 20.955832755945295 
 START_LON = 105.93093723389487
 GPX_DIR = /Users/zhenya/Documents/gpx/ecopark
+NAME = Ecopark
 
 GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
@@ -155,10 +156,10 @@ trip:
 gpx:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/gpx.py \
+	$(NAME) \
 	$(TRIP_CSV) \
 	$(TRIP_GPX)
 
-simplifygpx:
 	@gpsbabel -i gpx -f $(TRIP_GPX) \
 	-x simplify,crosstrack,error=0.01k \
 	-o gpx -F $(SIMPLIFIED_TRIP_GPX)
