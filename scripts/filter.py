@@ -5,7 +5,7 @@ import pandas as pd
 
 from geopy.distance import geodesic
 
-FILTER_DISTANCE_METERS = 50
+FILTER_DISTANCE_METERS = 100
 
 def filter_by_distance(df):
     filtered = [df.iloc[0]]
