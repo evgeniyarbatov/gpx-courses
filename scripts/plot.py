@@ -23,7 +23,7 @@ def make_plot(df, title, plot_filename):
     ax.margins(0)
     
     plt.title(title)
-    plt.savefig(plot_filename, bbox_inches='tight', pad_inches=0)
+    plt.savefig(plot_filename, bbox_inches='tight')
     
     plt.close()
 
