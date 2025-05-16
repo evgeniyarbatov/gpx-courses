@@ -7,7 +7,7 @@ import pandas as pd
 from shapely.geometry import LineString, Point
 from pyproj import Geod
 
-INTERPOLATE_DISTANCE_METERS = 10
+INTERPOLATE_DISTANCE_METERS = 50
 
 geod = Geod(ellps="WGS84")
 
