@@ -133,18 +133,10 @@ interpolate:
 	"Interpolate OSM Ways" \
 	data/osm-interpolate.jpeg
 
-sort:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/sort.py \
-	$(START_LAT) \
-	$(START_LON) \
-	$(INTERPOLATED_OSM_GPX_CSV) \
-	$(SORTED_OSM_GPX_CSV)
-
 trip:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/trip.py \
-	$(SORTED_OSM_GPX_CSV) \
+	$(INTERPOLATED_OSM_GPX_CSV) \
 	$(TRIP_CSV)
 
 	@source $(VENV_PATH)/bin/activate && \
