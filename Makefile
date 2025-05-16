@@ -1,10 +1,10 @@
 PROJECT_NAME := $(shell basename $(PWD))
 VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
-START_LAT = 20.955832755945295 
-START_LON = 105.93093723389487
-GPX_DIR = /Users/zhenya/Documents/gpx/ecopark
-NAME = Ecopark
+START_LAT = 20.243868574671275 
+START_LON = 105.71885825867606
+GPX_DIR = /Users/zhenya/Documents/gpx/cuc_phuong
+NAME = "Cuc Phuong"
 
 GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
