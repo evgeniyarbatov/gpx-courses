@@ -1,6 +1,6 @@
 services:
   osrm:
-    image: osrm-backend
+    image: ghcr.io/project-osrm/osrm-backend:v6.0.0
     volumes:
       - ./osm/foot:/data
       - ./profiles:/profiles
@@ -10,7 +10,7 @@ services:
       - 6000:5000
     restart: unless-stopped
     command: >
-      bash -c "
+      sh -c "
       osrm-extract -p /profiles/foot.lua /data/gpx.osm.pbf && 
       osrm-partition /data/gpx.osrm && 
       osrm-customize /data/gpx.osrm && 
