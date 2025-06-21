@@ -1,10 +1,10 @@
 PROJECT_NAME := $(shell basename $(PWD))
 VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
-START_LAT = 20.718078028888513
-START_LON = 105.107.05211599362829
-GPX_DIR = /Users/zhenya/Documents/gpx/catba
-NAME = "Cat Ba"
+START_LAT = 20.861703962948326
+START_LON = 106.68361829238837
+GPX_DIR = /Users/evgeny.arbatov/Documents/gpx/haiphong
+NAME = "Hai Phong"
 
 GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
@@ -89,12 +89,8 @@ osmextract:
 	$(OSM_WAYS)
 
 docker:
-	@open -a Docker
-	@while ! docker info > /dev/null 2>&1; do \
-			sleep 1; \
-	done
 	@docker stop $$(docker ps -a -q)
-	@docker compose up --build -d
+	@docker-compose up --build -d
 
 match:
 	@source $(VENV_PATH)/bin/activate && \
