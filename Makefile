@@ -121,19 +121,6 @@ filter:
 	"Filter by Way Count and Distance between Points" \
 	data/osm-filter.jpeg
 
-interpolate:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/interpolate.py \
-	$(OSM_WAYS) \
-	$(FILTERED_OSM_GPX_CSV) \
-	$(INTERPOLATED_OSM_GPX_CSV)
-
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plot.py \
-	$(INTERPOLATED_OSM_GPX_CSV) \
-	"Interpolate OSM Ways" \
-	data/osm-interpolate.jpeg
-
 trip:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/trip.py \
