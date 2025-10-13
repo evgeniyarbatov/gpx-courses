@@ -1,10 +1,9 @@
-PROJECT_NAME := $(shell basename $(PWD))
-VENV_PATH = ~/.venv/$(PROJECT_NAME)
+VENV_PATH = .venv
 
-START_LAT = 20.718078028888513
-START_LON = 105.107.05211599362829
-GPX_DIR = /Users/zhenya/Documents/gpx/catba
-NAME = "Cat Ba"
+START_LAT = 20.238765738188004 
+START_LON = 105.9336909776193
+GPX_DIR = /Users/zhenya/Documents/gpx/ninh_binh
+NAME = "Ninh Binh"
 
 GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
@@ -50,6 +49,8 @@ plotgpx:
 compress: $(COMPRESSED_GPX_FILES)
 
 $(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
+	@mkdir -p $(GPX_COMPRESSED_DIR)
+
 	@gpsbabel -i gpx -f $< \
 	-x simplify,crosstrack,error=0.01k \
 	-o gpx -F $@
