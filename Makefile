@@ -137,7 +137,7 @@ interpolate:
 trip:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/trip.py \
-	$(INTERPOLATED_OSM_GPX_CSV) \
+	$(FILTERED_OSM_GPX_CSV) \
 	$(TRIP_CSV)
 
 	@source $(VENV_PATH)/bin/activate && \
