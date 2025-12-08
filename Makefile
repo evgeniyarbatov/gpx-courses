@@ -4,13 +4,6 @@ PYTHON := $(VENV_PATH)/bin/python
 PIP := $(VENV_PATH)/bin/pip
 REQUIREMENTS := requirements.txt
 
-venv:
-	@python3 -m venv $(VENV_PATH)
-
-install: venv
-	@$(PIP) install --disable-pip-version-check -q --upgrade pip
-	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
-
 START_LAT = 20.244784765340395
 START_LON = 105.93291425643353
 GPX_DIR = /Users/zhenya/Documents/gpx/ninh_binh
@@ -43,7 +36,12 @@ TRIP_GPX = data/trip.gpx
 
 SIMPLIFIED_TRIP_GPX = data/simplified-trip.gpx
 
-	pip install --disable-pip-version-check -q -r requirements.txt
+venv:
+	@python3 -m venv $(VENV_PATH)
+
+install: venv
+	@$(PIP) install --disable-pip-version-check -q --upgrade pip
+	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
 
 plotgpx:
 	@source $(VENV_PATH)/bin/activate && \
