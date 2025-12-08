@@ -11,7 +11,6 @@ install: venv
 	@$(PIP) install --disable-pip-version-check -q --upgrade pip
 	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
 
-
 START_LAT = 20.244784765340395
 START_LON = 105.93291425643353
 GPX_DIR = /Users/zhenya/Documents/gpx/ninh_binh
@@ -43,7 +42,6 @@ TRIP_CSV = data/trip.csv
 TRIP_GPX = data/trip.gpx
 
 SIMPLIFIED_TRIP_GPX = data/simplified-trip.gpx
-
 
 	pip install --disable-pip-version-check -q -r requirements.txt
 
