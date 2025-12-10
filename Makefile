@@ -153,3 +153,6 @@ gpx:
 	$(GPX_COMPRESSED_DIR) \
 	"Trip GPX" \
 	data/trip-gpx.jpeg	
+
+cleanvenv:
+	@rm -rf .venv
