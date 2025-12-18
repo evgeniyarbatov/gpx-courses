@@ -3,6 +3,7 @@ import gpxpy
 
 import pandas as pd
 
+
 def make_gpx(df, name, trip_gpx):
     gpx = gpxpy.gpx.GPX()
 
@@ -16,20 +17,22 @@ def make_gpx(df, name, trip_gpx):
     gpx_track.segments.append(gpx_segment)
 
     for _, row in df.iterrows():
-        point = gpxpy.gpx.GPXTrackPoint(latitude=row['lat'], longitude=row['lon'])
+        point = gpxpy.gpx.GPXTrackPoint(latitude=row["lat"], longitude=row["lon"])
         gpx_segment.points.append(point)
 
-    with open(trip_gpx, 'w') as f:
+    with open(trip_gpx, "w") as f:
         f.write(gpx.to_xml())
+
 
 def main(
     name,
     trip_csv,
-	trip_gpx,
+    trip_gpx,
 ):
     df = pd.read_csv(trip_csv)
-    
+
     make_gpx(df, name, trip_gpx)
 
+
 if __name__ == "__main__":
-	main(*sys.argv[1:])
+    main(*sys.argv[1:])
