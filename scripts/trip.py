@@ -1,6 +1,5 @@
 import sys
 import requests
-import json
 import polyline
 
 import pandas as pd
