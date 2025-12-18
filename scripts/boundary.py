@@ -3,7 +3,6 @@ import sys
 import pandas as pd
 import geopandas as gpd
 
-from shapely.geometry import Point
 
 
 def main(csv_file, boundary_file):
