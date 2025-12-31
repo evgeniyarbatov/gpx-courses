@@ -9,4 +9,6 @@ geopy
 polyline
 pyproj
 osmium
-haversine
+haversine-e 
+black
+flake8

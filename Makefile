@@ -1,10 +1,13 @@
-PROJECT_NAME := $(shell basename $(PWD))
-VENV_PATH = ~/.venv/$(PROJECT_NAME)
+VENV_PATH := .venv
 
-START_LAT = 20.718078028888513
-START_LON = 105.107.05211599362829
-GPX_DIR = /Users/zhenya/Documents/gpx/catba
-NAME = "Cat Ba"
+PYTHON := $(VENV_PATH)/bin/python
+PIP := $(VENV_PATH)/bin/pip
+REQUIREMENTS := requirements.txt
+
+START_LAT = 20.244784765340395
+START_LON = 105.93291425643353
+GPX_DIR = /Users/zhenya/Documents/gpx/ninh_binh
+NAME = "Ninh Binh"
 
 GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
@@ -37,8 +40,8 @@ venv:
 	@python3 -m venv $(VENV_PATH)
 
 install: venv
-	@source $(VENV_PATH)/bin/activate && \
-	pip install --disable-pip-version-check -q -r requirements.txt
+	@$(PIP) install --disable-pip-version-check -q --upgrade pip
+	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
 
 plotgpx:
 	@source $(VENV_PATH)/bin/activate && \
@@ -50,6 +53,8 @@ plotgpx:
 compress: $(COMPRESSED_GPX_FILES)
 
 $(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
+	@mkdir -p $(GPX_COMPRESSED_DIR)
+
 	@gpsbabel -i gpx -f $< \
 	-x simplify,crosstrack,error=0.01k \
 	-o gpx -F $@
@@ -120,23 +125,10 @@ filter:
 	"Filter by Way Count and Distance between Points" \
 	data/osm-filter.jpeg
 
-interpolate:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/interpolate.py \
-	$(OSM_WAYS) \
-	$(FILTERED_OSM_GPX_CSV) \
-	$(INTERPOLATED_OSM_GPX_CSV)
-
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plot.py \
-	$(INTERPOLATED_OSM_GPX_CSV) \
-	"Interpolate OSM Ways" \
-	data/osm-interpolate.jpeg
-
 trip:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/trip.py \
-	$(INTERPOLATED_OSM_GPX_CSV) \
+	$(FILTERED_OSM_GPX_CSV) \
 	$(TRIP_CSV)
 
 	@source $(VENV_PATH)/bin/activate && \
@@ -161,3 +153,6 @@ gpx:
 	$(GPX_COMPRESSED_DIR) \
 	"Trip GPX" \
 	data/trip-gpx.jpeg	
+
+cleanvenv:
+	@rm -rf $(VENV_PATH)
