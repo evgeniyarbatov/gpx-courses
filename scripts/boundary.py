@@ -4,7 +4,6 @@ import pandas as pd
 import geopandas as gpd
 
 
-
 def main(csv_file, boundary_file):
     df = pd.read_csv(csv_file)
 

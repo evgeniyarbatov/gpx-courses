@@ -1,13 +1,19 @@
 VENV_PATH := .venv
 
 PYTHON := $(VENV_PATH)/bin/python
+BLACK := $(VENV_PATH)/bin/black
+FLAKE8 := $(VENV_PATH)/bin/flake8
 PIP := $(VENV_PATH)/bin/pip
+
 REQUIREMENTS := requirements.txt
+
+SCRIPTS_DIR = scripts
+PYTHON_FILES := $(shell find $(SCRIPTS_DIR) -name "*.py")
 
 START_LAT = 20.244784765340395
 START_LON = 105.93291425643353
-GPX_DIR = /Users/zhenya/Documents/gpx/ninh_binh
-NAME = "Ninh Binh"
+GPX_DIR = /Users/zhenya/Downloads/aleksey-trip
+NAME = "Soc Son"
 
 GPX_CSV = data/gpx.csv
 BOUNDARY_POLY = data/boundary.poly
@@ -43,9 +49,22 @@ install: venv
 	@$(PIP) install --disable-pip-version-check -q --upgrade pip
 	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
 
+format:
+	@if [ -n "$(PYTHON_FILES)" ]; then \
+		$(BLACK) $(PYTHON_FILES); \
+	else \
+		echo "No Python files"; \
+	fi
+
+lint: format
+	@if [ -n "$(PYTHON_FILES)" ]; then \
+		$(FLAKE8) $(PYTHON_FILES); \
+	else \
+		echo "No Python files"; \
+	fi
+
 plotgpx:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plotgpx.py \
+	@$(PYTHON) scripts/plotgpx.py \
 	$(GPX_DIR) \
 	"Original GPX" \
 	data/original-gpx.jpeg
@@ -60,8 +79,7 @@ $(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
 	-o gpx -F $@
 
 extract:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/extract.py \
+	@$(PYTHON) scripts/extract.py \
 	$(GPX_COMPRESSED_DIR) \
 	$(GPX_CSV)
 
@@ -72,8 +90,7 @@ extract:
 	data/simplified-gpx.jpeg
 
 boundary:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/boundary.py \
+	@$(PYTHON) scripts/boundary.py \
 	$(GPX_CSV) \
 	$(BOUNDARY_POLY)
 
@@ -88,8 +105,7 @@ osmextract:
 
 	@bzip2 -c $(OSM_DIR)/gpx.osm > $(OSM_DIR)/overpass-api/gpx.osm.bz2
 
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/ways.py \
+	@$(PYTHON) scripts/ways.py \
 	$(OSM_DIR)/gpx.osm \
 	$(OSM_WAYS)
 
@@ -102,20 +118,17 @@ docker:
 	@docker compose up --build -d
 
 match:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/match.py \
+	@$(PYTHON) scripts/match.py \
 	$(GPX_CSV) \
 	$(OSM_GPX_CSV)
 
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plot.py \
+	@$(PYTHON) scripts/plot.py \
 	$(OSM_GPX_CSV) \
 	"OSM Match and Overpass API Filter" \
 	data/osm-match.jpeg
 
 filter:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/filter.py \
+	@$(PYTHON) scripts/filter.py \
 	$(OSM_GPX_CSV) \
 	$(FILTERED_OSM_GPX_CSV)
 
@@ -126,8 +139,7 @@ filter:
 	data/osm-filter.jpeg
 
 trip:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/trip.py \
+	@$(PYTHON) scripts/trip.py \
 	$(FILTERED_OSM_GPX_CSV) \
 	$(TRIP_CSV)
 
@@ -138,8 +150,7 @@ trip:
 	data/trip-gpx.jpeg
 
 gpx:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/gpx.py \
+	@$(PYTHON) scripts/gpx.py \
 	$(NAME) \
 	$(TRIP_CSV) \
 	$(TRIP_GPX)
@@ -148,11 +159,10 @@ gpx:
 	-x simplify,crosstrack,error=0.01k \
 	-o gpx -F $(SIMPLIFIED_TRIP_GPX)
 
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plotgpx.py \
+	@$(PYTHON) scripts/plotgpx.py \
 	$(GPX_COMPRESSED_DIR) \
 	"Trip GPX" \
-	data/trip-gpx.jpeg	
+	data/trip-gpx.jpeg
 
 cleanvenv:
 	@rm -rf $(VENV_PATH)
