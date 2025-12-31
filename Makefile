@@ -1,46 +1,36 @@
 VENV_PATH := .venv
-
 PYTHON := $(VENV_PATH)/bin/python
+PIP := $(VENV_PATH)/bin/pip
 BLACK := $(VENV_PATH)/bin/black
 FLAKE8 := $(VENV_PATH)/bin/flake8
-PIP := $(VENV_PATH)/bin/pip
 
 REQUIREMENTS := requirements.txt
-
-SCRIPTS_DIR = scripts
+SCRIPTS_DIR := scripts
 PYTHON_FILES := $(shell find $(SCRIPTS_DIR) -name "*.py")
 
-START_LAT = 20.244784765340395
-START_LON = 105.93291425643353
-GPX_DIR = /Users/zhenya/Downloads/aleksey-trip
-NAME = "Soc Son"
-
-GPX_CSV = data/gpx.csv
-BOUNDARY_POLY = data/boundary.poly
-
-OSM_DIR = osm
-
-OSM_WAYS = data/osm-ways.csv
-
-OSM_GPX_CSV = data/osm-gpx.csv
-FILTERED_OSM_GPX_CSV = data/filtered-osm-gpx.csv
-INTERPOLATED_OSM_GPX_CSV = data/interpolated-osm-gpx.csv
-SORTED_OSM_GPX_CSV = data/sorted-osm-gpx.csv
-
-OSM_URL = https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
-COUNTRY_OSM_FILE = $$(basename $(OSM_URL))
-
-GPX_COMPRESSED_DIR = data/gpx_compressed
-
+GPX_DIR := /Users/zhenya/Downloads/aleksey-trip
+GPX_COMPRESSED_DIR := data/gpx_compressed
 GPX_FILES := $(wildcard $(GPX_DIR)/*.gpx)
 COMPRESSED_GPX_FILES := $(patsubst $(GPX_DIR)/%.gpx,$(GPX_COMPRESSED_DIR)/%.gpx,$(GPX_FILES))
 
-OSM_MATCH_PLOT = data/matched-osm.jpeg
+GPX_CSV := data/gpx.csv
+BOUNDARY_POLY := data/boundary.poly
 
-TRIP_CSV = data/trip.csv
-TRIP_GPX = data/trip.gpx
+OSM_DIR := osm
+OSM_URL := https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
+COUNTRY_OSM_FILE := $$(basename $(OSM_URL))
 
-SIMPLIFIED_TRIP_GPX = data/simplified-trip.gpx
+OSM_WAYS := data/osm-ways.csv
+OSM_GPX_CSV := data/osm-gpx.csv
+FILTERED_OSM_GPX_CSV := data/filtered-osm-gpx.csv
+INTERPOLATED_OSM_GPX_CSV := data/interpolated-osm-gpx.csv
+SORTED_OSM_GPX_CSV := data/sorted-osm-gpx.csv
+OSM_MATCH_PLOT := data/matched-osm.jpeg
+
+TRIP_CSV := data/trip.csv
+TRIP_GPX := data/trip.gpx
+SIMPLIFIED_TRIP_GPX := data/simplified-trip.gpx
+NAME := "Soc Son"
 
 venv:
 	@python3 -m venv $(VENV_PATH)
@@ -166,3 +156,5 @@ gpx:
 
 cleanvenv:
 	@rm -rf $(VENV_PATH)
+
+.PHONY: venv install format lint plotgpx compress extract boundary country osmextract docker match filter trip gpx cleanvenv
