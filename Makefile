@@ -108,6 +108,7 @@ docker:
 	@docker compose up --build -d
 
 match:
+	@echo "Matching..."
 	@$(PYTHON) scripts/match.py \
 	$(GPX_CSV) \
 	$(OSM_GPX_CSV)
@@ -118,6 +119,7 @@ match:
 	data/osm-match.jpeg
 
 filter:
+	@echo "Filtering..."
 	@$(PYTHON) scripts/filter.py \
 	$(OSM_GPX_CSV) \
 	$(FILTERED_OSM_GPX_CSV)
@@ -129,6 +131,7 @@ filter:
 	data/osm-filter.jpeg
 
 trip:
+	@echo "Making trip..."
 	@$(PYTHON) scripts/trip.py \
 	$(FILTERED_OSM_GPX_CSV) \
 	$(TRIP_CSV)
@@ -140,6 +143,7 @@ trip:
 	data/trip-gpx.jpeg
 
 gpx:
+	@echo "Writing GPX..."
 	@$(PYTHON) scripts/gpx.py \
 	$(NAME) \
 	$(TRIP_CSV) \
@@ -154,7 +158,13 @@ gpx:
 	"Trip GPX" \
 	data/trip-gpx.jpeg
 
+parse: compress extract boundary osmextract
+	@echo "Parsing complete."
+
+course: match filter trip gpx
+	@echo "Course route complete."
+
 cleanvenv:
 	@rm -rf $(VENV_PATH)
 
-.PHONY: venv install format lint plotgpx compress extract boundary country osmextract docker match filter trip gpx cleanvenv
+.PHONY: venv install format lint plotgpx compress extract boundary country osmextract docker match filter trip gpx pipeline cleanvenv
