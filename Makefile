@@ -4,7 +4,7 @@ PYTHON := $(VENV_PATH)/bin/python
 PIP := $(VENV_PATH)/bin/pip
 REQUIREMENTS := requirements.txt
 
-GPX_DIR := /Users/zhenya/Downloads/aleksey-trip
+GPX_DIR ?=
 GPX_COMPRESSED_DIR := data/gpx_compressed
 GPX_FILES := $(wildcard $(GPX_DIR)/*.gpx)
 COMPRESSED_GPX_FILES := $(patsubst $(GPX_DIR)/%.gpx,$(GPX_COMPRESSED_DIR)/%.gpx,$(GPX_FILES))
@@ -35,6 +35,7 @@ FILTER_MAX_POINTS_ARG := $(if $(FILTER_MAX_POINTS), --max-points $(FILTER_MAX_PO
 .PHONY: \
 	venv install test \
 	clean clean-data clean-data-gpx \
+	gpx-input-check \
 	plotgpx compress extract boundary country osmextract docker match filter trip gpx parse course
 
 venv:
@@ -56,13 +57,18 @@ clean-data:
 clean-data-gpx:
 	@find data -type f -name "*.gpx" -delete
 
-plotgpx:
+gpx-input-check:
+	@test -n "$(strip $(GPX_DIR))" || (echo "Error: GPX_DIR is required. Example: make parse GPX_DIR=/path/to/gpx-dir" >&2; exit 1)
+	@test -d "$(GPX_DIR)" || (echo "Error: GPX_DIR does not exist: $(GPX_DIR)" >&2; exit 1)
+
+plotgpx: gpx-input-check
 	@$(PYTHON) scripts/plotgpx.py \
 	$(GPX_DIR) \
 	"Original GPX" \
 	data/original-gpx.jpeg
 
-compress: clean-data-gpx $(COMPRESSED_GPX_FILES)
+compress: gpx-input-check clean-data-gpx $(COMPRESSED_GPX_FILES)
+	@test -n "$(strip $(GPX_FILES))" || (echo "Error: no .gpx files found in GPX_DIR: $(GPX_DIR)" >&2; exit 1)
 
 $(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
 	@mkdir -p $(GPX_COMPRESSED_DIR)

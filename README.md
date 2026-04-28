@@ -18,7 +18,7 @@ Build a clean course GPX from raw activity traces by:
 - `colima` + `nerdctl` (for local OSRM + Overpass via `docker-compose.yaml`)
 
 ## Key Makefile variables
-- `GPX_DIR` (default: `/Users/zhenya/Downloads/aleksey-trip`)
+- `GPX_DIR` (required; no default)
 - `GPX_COMPRESSED_DIR` (default: `data/gpx_compressed`)
 - `FILTER_DISTANCE_METERS` (default: `100`)
 - `FILTER_CENTER_MODE` (default: `median`, allowed: `median|mean`)
