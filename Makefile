@@ -1,12 +1,8 @@
 VENV_PATH := .venv
+
 PYTHON := $(VENV_PATH)/bin/python
 PIP := $(VENV_PATH)/bin/pip
-BLACK := $(VENV_PATH)/bin/black
-FLAKE8 := $(VENV_PATH)/bin/flake8
-
 REQUIREMENTS := requirements.txt
-SCRIPTS_DIR := scripts
-PYTHON_FILES := $(shell find $(SCRIPTS_DIR) -name "*.py")
 
 GPX_DIR := /Users/zhenya/Downloads/aleksey-trip
 GPX_COMPRESSED_DIR := data/gpx_compressed
@@ -54,20 +50,6 @@ venv:
 install: venv
 	@$(PIP) install --disable-pip-version-check -q --upgrade pip
 	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
-
-format:
-	@if [ -n "$(PYTHON_FILES)" ]; then \
-		$(BLACK) $(PYTHON_FILES); \
-	else \
-		echo "No Python files"; \
-	fi
-
-lint: format
-	@if [ -n "$(PYTHON_FILES)" ]; then \
-		$(FLAKE8) $(PYTHON_FILES); \
-	else \
-		echo "No Python files"; \
-	fi
 
 plotgpx:
 	@$(PYTHON) scripts/plotgpx.py \
