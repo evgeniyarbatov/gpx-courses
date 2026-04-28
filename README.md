@@ -115,14 +115,3 @@ Create a single route/course from multiple GPX files by:
 3) Create per-file colored GeoDataFrames.
 4) Reproject to EPSG:3857 and plot on shared axis.
 5) Add basemap + legend and save image.
-
-## Script docs
-- [scripts/boundary.py](docs/boundary.md)
-- [scripts/extract.py](docs/extract.md)
-- [scripts/filter.py](docs/filter.md)
-- [scripts/gpx.py](docs/gpx.md)
-- [scripts/match.py](docs/match.md)
-- [scripts/plot.py](docs/plot.md)
-- [scripts/plotgpx.py](docs/plotgpx.md)
-- [scripts/trip.py](docs/trip.md)
-- [scripts/ways.py](docs/ways.md)
