@@ -1,9 +1,13 @@
+import os
 import sys
 import requests
 
 import pandas as pd
 
 OSRM_URL = "http://localhost:6000/match/v1/foot/"
+OVERPASS_API_URL = os.getenv(
+    "OVERPASS_API_URL", "http://localhost:18080/api/interpreter"
+)
 MATCH_RADIUS_METERS = 20
 
 
@@ -29,7 +33,7 @@ def get_ways(nodes):
     """
 
     response = requests.get(
-        "http://localhost:8000/api/interpreter", params={"data": overpass_query}
+        OVERPASS_API_URL, params={"data": overpass_query}
     )
     data = response.json()
 

@@ -5,7 +5,7 @@ Map-matches consecutive GPS points against a local OSRM foot profile, then queri
 
 ## Services/Dependencies
 - OSRM backend running on `http://localhost:6000` (see `docker-compose.yaml`, port 6000 maps to the container's 5000).
-- Overpass API running on `http://localhost:8000` with the clipped dataset produced by `osmextract`.
+- Overpass API running on `http://localhost:18080` with the clipped dataset produced by `osmextract`.
 - pandas, requests.
 
 ## Arguments
@@ -24,6 +24,7 @@ python scripts/match.py data/gpx.csv data/osm-gpx.csv
 
 ## Notes
 - Each adjacent pair of points is sent to OSRM `match` with a 20 m radius per point (`MATCH_RADIUS_METERS`).
+- Overpass endpoint defaults to `http://localhost:18080/api/interpreter`; override with `OVERPASS_API_URL` if needed.
 - When OSRM returns multiple tracepoints, each is enriched with way IDs from Overpass; entries with no ways are skipped.
 - Output rows are deduplicated on `lat,lon` before writing.
 - Ensure OSRM/Overpass containers are running (`make docker`) and that `osmextract` has generated `osm/gpx.osm` and the Overpass database before matching.
