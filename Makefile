@@ -113,7 +113,7 @@ match:
 
 	@$(PYTHON) scripts/plot.py \
 	$(OSM_GPX_CSV) \
-	"OSM Match and Overpass API Filter" \
+	"OSRM-Matched Points with OSM Way IDs" \
 	data/osm-match.jpeg
 
 filter:
@@ -127,7 +127,7 @@ filter:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plot.py \
 	$(FILTERED_OSM_GPX_CSV) \
-	"Filter by Way Count and Distance between Points" \
+	"Center-Distance Filtered Match Points" \
 	data/osm-filter.jpeg
 
 trip:
@@ -139,7 +139,7 @@ trip:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plot.py \
 	$(TRIP_CSV) \
-	"Trip GPX" \
+	"OSRM Trip Route (CSV Output)" \
 	data/trip-gpx.jpeg
 
 gpx:
@@ -162,9 +162,9 @@ gpx:
 	fi
 
 	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
-		$(PYTHON) scripts/plotgpx.py "data/trip-route-*.gpx" "Trip GPX" data/trip-gpx.jpeg; \
+		$(PYTHON) scripts/plotgpx.py "data/trip-route-*.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
 	else \
-		$(PYTHON) scripts/plotgpx.py "$(TRIP_GPX)" "Trip GPX" data/trip-gpx.jpeg; \
+		$(PYTHON) scripts/plotgpx.py "$(TRIP_GPX)" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
 	fi
 
 parse: compress extract boundary osmextract
