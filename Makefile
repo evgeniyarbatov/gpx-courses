@@ -104,10 +104,7 @@ docker:
 	@while ! colima status 2>&1 | grep -qi "running"; do \
 		sleep 1; \
 	done
-	@containers=$$(colima nerdctl -- ps -a -q); \
-	if [ -n "$$containers" ]; then \
-		colima nerdctl -- stop $$containers; \
-	fi
+	@colima nerdctl -- compose down --remove-orphans || true
 	@colima nerdctl -- compose up --build -d
 
 match:
