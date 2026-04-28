@@ -32,6 +32,11 @@ TRIP_GPX := data/trip.gpx
 SIMPLIFIED_TRIP_GPX := data/simplified-trip.gpx
 NAME := "Soc Son"
 
+.PHONY: clean-data-gpx
+
+clean-data-gpx:
+	@find data -type f -name "*.gpx" -delete
+
 venv:
 	@python3 -m venv $(VENV_PATH)
 
@@ -59,7 +64,7 @@ plotgpx:
 	"Original GPX" \
 	data/original-gpx.jpeg
 
-compress: $(COMPRESSED_GPX_FILES)
+compress: clean-data-gpx $(COMPRESSED_GPX_FILES)
 
 $(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
 	@mkdir -p $(GPX_COMPRESSED_DIR)
