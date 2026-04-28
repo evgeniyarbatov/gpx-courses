@@ -26,7 +26,6 @@ OSM_MATCH_PLOT := data/matched-osm.jpeg
 TRIP_CSV := data/trip.csv
 TRIP_GPX := data/trip.gpx
 SIMPLIFIED_TRIP_GPX := data/simplified-trip.gpx
-NAME := "Soc Son"
 
 FILTER_DISTANCE_METERS ?= 100
 FILTER_CENTER_MODE ?= median
@@ -143,9 +142,10 @@ trip:
 	data/trip-gpx.jpeg
 
 gpx:
+	@test -n "$(strip $(NAME))" || (echo "Error: NAME is required. Example: make gpx NAME=\"Soc Son\"" >&2; exit 1)
 	@echo "Writing GPX..."
 	@$(PYTHON) scripts/gpx.py \
-	$(NAME) \
+	"$(NAME)" \
 	$(TRIP_CSV) \
 	$(TRIP_GPX)
 
