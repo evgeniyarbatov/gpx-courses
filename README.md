@@ -27,8 +27,8 @@ Create a single route/course from multiple GPX files by:
 4) `make osmextract` clips OSM to boundary and prepares Overpass input.
 5) `make docker` starts local OSRM + Overpass services.
 6) `scripts/match.py` snaps points to OSM and stores matched points/ways in `data/osm-gpx.csv`.
-7) `scripts/filter.py` removes near-duplicate points into `data/filtered-osm-gpx.csv`.
-8) `scripts/trip.py` requests OSRM trip optimization and writes route geometry to `data/trip.csv`.
+7) `scripts/filter.py` keeps shape-defining points (furthest from route center first) and removes near-duplicates into `data/filtered-osm-gpx.csv`.
+8) `scripts/trip.py` requests OSRM trip optimization and retries with fewer center-priority points when OSRM returns `NoTrips`, then writes route geometry to `data/trip.csv`.
 9) `scripts/gpx.py` converts route CSV to `data/trip.gpx` (and Makefile also writes a simplified GPX copy).
 
 ## End-to-end workflow
@@ -38,6 +38,7 @@ Create a single route/course from multiple GPX files by:
    - `make parse GPX_DIR=/Users/zhenya/Downloads/aleksey-trip NAME="Soc Son"`
 4) Start OSRM + Overpass: `make docker`
 5) Build final course: `make course`
+   - Optional filter tuning: `make filter FILTER_DISTANCE_METERS=80 FILTER_MAX_POINTS=500 FILTER_CENTER_MODE=median`
 6) Optional visualization: `make plotgpx`
 
 ## Script steps
@@ -75,18 +76,20 @@ Create a single route/course from multiple GPX files by:
 
 ### `scripts/filter.py`
 1) Read matched point CSV.
-2) Keep the first point.
-3) For each next point, compute geodesic distance to all kept points.
-4) Drop point if it is within 100 m of any kept point.
-5) Write filtered CSV.
+2) Compute route center (`median` by default, `mean` optional).
+3) Rank points by distance from center (furthest first).
+4) Keep ranked points while enforcing minimum spacing (`100 m` default).
+5) Optionally cap retained points via `--max-points`.
+6) Re-sort kept points to original input order and write filtered CSV.
 
 ### `scripts/trip.py`
 1) Read filtered point CSV.
 2) Build OSRM `/trip/v1/foot` coordinate string (`lon,lat;...`).
 3) Request full overview polyline (`polyline6`).
-4) Validate response status and payload (`code=Ok`, trip exists, geometry exists).
-5) Decode polyline geometry to `(lat, lon)` sequence.
-6) Write route CSV.
+4) If OSRM returns `NoTrips`, retry with fewer high-priority points (closest-to-center points are removed first).
+5) Validate response status and payload (`code=Ok`, trip exists, geometry exists).
+6) Decode polyline geometry to `(lat, lon)` sequence.
+7) Write route CSV.
 
 ### `scripts/gpx.py`
 1) Read route CSV.

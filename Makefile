@@ -32,6 +32,11 @@ TRIP_GPX := data/trip.gpx
 SIMPLIFIED_TRIP_GPX := data/simplified-trip.gpx
 NAME := "Soc Son"
 
+FILTER_DISTANCE_METERS ?= 100
+FILTER_CENTER_MODE ?= median
+FILTER_MAX_POINTS ?=
+FILTER_MAX_POINTS_ARG := $(if $(FILTER_MAX_POINTS), --max-points $(FILTER_MAX_POINTS),)
+
 .PHONY: clean clean-data clean-data-gpx
 
 clean: clean-data
@@ -133,7 +138,9 @@ filter:
 	@echo "Filtering..."
 	@$(PYTHON) scripts/filter.py \
 	$(OSM_GPX_CSV) \
-	$(FILTERED_OSM_GPX_CSV)
+	$(FILTERED_OSM_GPX_CSV) \
+	--distance-meters $(FILTER_DISTANCE_METERS) \
+	--center-mode $(FILTER_CENTER_MODE)$(FILTER_MAX_POINTS_ARG)
 
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plot.py \

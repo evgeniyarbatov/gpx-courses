@@ -1,11 +1,14 @@
 import sys
-import requests
-import polyline
 
 import pandas as pd
+import polyline
+import requests
+from geopy.distance import geodesic
 
 OSRM_TRIP_URL = "http://localhost:6000/trip/v1/foot/"
 MIN_TRIP_POINTS = 2
+NO_TRIPS_CODE = "NoTrips"
+RETRY_REDUCTION_RATIO = 0.85
 
 
 class TripError(RuntimeError):
@@ -90,20 +93,62 @@ def _request_trip(df):
     }
     response = requests.get(url, params=params, timeout=30)
 
-    # with open(trip_csv_file, "w") as file:
-    #     json.dump(trip_data, file, indent=4)
-
     return _extract_trip_geometry(response)
+
+
+def _distance_from_center(df):
+    center = (df["lat"].median(), df["lon"].median())
+    return df.apply(
+        lambda row: geodesic((row["lat"], row["lon"]), center).meters,
+        axis=1,
+    )
+
+
+def _select_high_priority_points(df, target_count):
+    if target_count >= len(df):
+        return df
+
+    distances = _distance_from_center(df)
+    ranked_indices = (
+        distances.sort_values(ascending=False, kind="mergesort")
+        .head(target_count)
+        .index
+    )
+    keep_indices = sorted(ranked_indices)
+    return df.loc[keep_indices].reset_index(drop=True)
+
+
+def _next_retry_size(current_size):
+    reduced_size = int(current_size * RETRY_REDUCTION_RATIO)
+    reduced_size = min(current_size - 1, reduced_size)
+    return max(MIN_TRIP_POINTS, reduced_size)
 
 
 def get_trip(df, trip_csv_file):
     if df.empty:
         raise TripError("Trip input CSV has no points.")
-    encoded_geometry = _request_trip(df)
-    coordinates = polyline.decode(encoded_geometry, precision=6)
 
-    output_df = pd.DataFrame(coordinates, columns=["lat", "lon"])
-    output_df.to_csv(trip_csv_file, index=False)
+    attempt_df = df.reset_index(drop=True)
+
+    while len(attempt_df) >= MIN_TRIP_POINTS:
+        try:
+            encoded_geometry = _request_trip(attempt_df)
+            coordinates = polyline.decode(encoded_geometry, precision=6)
+
+            output_df = pd.DataFrame(coordinates, columns=["lat", "lon"])
+            output_df.to_csv(trip_csv_file, index=False)
+            return
+        except TripError as exc:
+            if exc.code != NO_TRIPS_CODE or len(attempt_df) == MIN_TRIP_POINTS:
+                raise
+
+            next_size = _next_retry_size(len(attempt_df))
+            attempt_df = _select_high_priority_points(df, next_size)
+
+    raise TripError(
+        "OSRM trip failed after retrying with fewer points.",
+        code=NO_TRIPS_CODE,
+    )
 
 
 def main(
