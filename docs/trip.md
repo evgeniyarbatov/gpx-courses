@@ -20,6 +20,7 @@ python scripts/trip.py data/filtered-osm-gpx.csv data/trip.csv
 ```
 
 ## Notes
-- If OSRM returns an error, the HTTP status and body are printed; no exception is raised.
+- If OSRM returns an error (for example `code=NoTrips`), the script exits with a clear error message and a non-zero status.
+- The response is validated (`code=Ok`, non-empty `trips`, and `geometry` present) before decoding.
 - The request uses `geometries=polyline6`, `annotations=false`, `steps=false` for compact responses.
 - Run after `filter.py` to trim noisy points before routing.
