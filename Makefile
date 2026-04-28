@@ -32,7 +32,20 @@ FILTER_CENTER_MODE ?= median
 FILTER_MAX_POINTS ?=
 FILTER_MAX_POINTS_ARG := $(if $(FILTER_MAX_POINTS), --max-points $(FILTER_MAX_POINTS),)
 
-.PHONY: clean clean-data clean-data-gpx
+.PHONY: \
+	venv install test \
+	clean clean-data clean-data-gpx \
+	plotgpx compress extract boundary country osmextract docker match filter trip gpx parse course
+
+venv:
+	@python3 -m venv $(VENV_PATH)
+
+install: venv
+	@$(PIP) install --disable-pip-version-check -q --upgrade pip
+	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
+
+test:
+	@$(PYTHON) -m unittest discover -s tests -p "test_*.py" -v
 
 clean: clean-data
 
@@ -42,13 +55,6 @@ clean-data:
 
 clean-data-gpx:
 	@find data -type f -name "*.gpx" -delete
-
-venv:
-	@python3 -m venv $(VENV_PATH)
-
-install: venv
-	@$(PIP) install --disable-pip-version-check -q --upgrade pip
-	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
 
 plotgpx:
 	@$(PYTHON) scripts/plotgpx.py \

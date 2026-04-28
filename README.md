@@ -33,13 +33,14 @@ Create a single route/course from multiple GPX files by:
 
 ## End-to-end workflow
 1) Create and populate virtualenv: `make install`
-2) Download country PBF once: `make country`
-3) Parse source GPX and clip OSM data:
+2) Run test suite: `make test`
+3) Download country PBF once: `make country`
+4) Parse source GPX and clip OSM data:
    - `make parse GPX_DIR=/Users/zhenya/Documents/gpx/bavi`
-4) Start OSRM + Overpass: `make docker`
-5) Build final course: `make course NAME="Ba Vi"`
+5) Start OSRM + Overpass: `make docker`
+6) Build final course: `make course NAME="Ba Vi"`
    - Optional filter tuning: `make filter FILTER_DISTANCE_METERS=80 FILTER_MAX_POINTS=500 FILTER_CENTER_MODE=median`
-6) Optional visualization: `make plotgpx`
+7) Optional visualization: `make plotgpx`
 
 ## Script steps
 
