@@ -161,10 +161,11 @@ gpx:
 		-o gpx -F $(SIMPLIFIED_TRIP_GPX); \
 	fi
 
-	@$(PYTHON) scripts/plotgpx.py \
-	$(GPX_COMPRESSED_DIR) \
-	"Trip GPX" \
-	data/trip-gpx.jpeg
+	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
+		$(PYTHON) scripts/plotgpx.py "data/trip-route-*.gpx" "Trip GPX" data/trip-gpx.jpeg; \
+	else \
+		$(PYTHON) scripts/plotgpx.py "$(TRIP_GPX)" "Trip GPX" data/trip-gpx.jpeg; \
+	fi
 
 parse: compress extract boundary osmextract
 	@echo "Parsing complete."

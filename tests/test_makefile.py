@@ -19,6 +19,19 @@ class MakefileTests(unittest.TestCase):
             result.stdout,
         )
 
+    def test_gpx_plots_trip_outputs_instead_of_compressed_inputs(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            ["make", "-n", "gpx"],
+            cwd=repo_root,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertIn('scripts/plotgpx.py "data/trip-route-*.gpx"', result.stdout)
+        self.assertNotIn("scripts/plotgpx.py data/gpx_compressed", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

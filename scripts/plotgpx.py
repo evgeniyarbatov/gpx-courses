@@ -3,14 +3,12 @@ import glob
 import gpxpy
 import os
 
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import contextily as ctx
-
-from shapely.geometry import LineString
-
-
 def plot(gpx_files, title, gpx_plot_filename):
+    import contextily as ctx
+    import geopandas as gpd
+    import matplotlib.pyplot as plt
+    from shapely.geometry import LineString
+
     colors = plt.get_cmap("tab20", len(gpx_files))
 
     gdfs = []
@@ -52,13 +50,24 @@ def plot(gpx_files, title, gpx_plot_filename):
     plt.savefig(gpx_plot_filename, dpi=300, bbox_inches="tight")
 
 
+def resolve_gpx_files(gpx_source):
+    if os.path.isdir(gpx_source):
+        gpx_pattern = os.path.join(gpx_source, "*.gpx")
+    else:
+        gpx_pattern = gpx_source
+
+    gpx_files = sorted(glob.glob(gpx_pattern))
+    if not gpx_files:
+        raise ValueError(f"No GPX files matched source: {gpx_source}")
+    return gpx_files
+
+
 def main(
-    gpx_dir,
+    gpx_source,
     title,
     gpx_plot_filename,
 ):
-    gpx_files = glob.glob(os.path.join(gpx_dir, "*.gpx"))
-
+    gpx_files = resolve_gpx_files(gpx_source)
     plot(gpx_files, title, gpx_plot_filename)
 
 
