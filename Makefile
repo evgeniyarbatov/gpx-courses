@@ -32,7 +32,13 @@ TRIP_GPX := data/trip.gpx
 SIMPLIFIED_TRIP_GPX := data/simplified-trip.gpx
 NAME := "Soc Son"
 
-.PHONY: clean-data-gpx
+.PHONY: clean clean-data clean-data-gpx
+
+clean: clean-data
+
+clean-data:
+	@find data -mindepth 1 ! -name ".gitignore" -delete
+	@echo "Cleaned data directory (preserved data/.gitignore)."
 
 clean-data-gpx:
 	@find data -type f -name "*.gpx" -delete
