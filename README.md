@@ -1,117 +1,116 @@
 # gpx-courses
 
-Create a single route/course from multiple GPX files by:
-1) extracting and simplifying source traces,
-2) clipping local OSM data to the activity area,
-3) snapping points to real OSM ways via OSRM + Overpass,
-4) thinning noisy points,
-5) building an optimized trip path,
-6) exporting final GPX.
+Build a clean course GPX from raw activity traces by:
+1. simplifying source GPX files,
+2. clipping local OSM to the activity area,
+3. matching traces to real OSM ways (OSRM + Overpass),
+4. filtering noisy matched points,
+5. generating optimized trip route geometry,
+6. exporting one or more final GPX routes.
 
-## Overall design
+## Prerequisites
+- Python 3 + `venv`
+- `gpsbabel`
+- `osmconvert`
+- `osmium` CLI
+- `wget`
+- `bzip2`
+- `colima` + `nerdctl` (for local OSRM + Overpass via `docker-compose.yaml`)
 
-### Inputs
-- One or more source GPX files in `GPX_DIR`.
-- Country-level OSM PBF (downloaded once by `make country`).
+## Key Makefile variables
+- `GPX_DIR` (default: `/Users/zhenya/Downloads/aleksey-trip`)
+- `GPX_COMPRESSED_DIR` (default: `data/gpx_compressed`)
+- `FILTER_DISTANCE_METERS` (default: `100`)
+- `FILTER_CENTER_MODE` (default: `median`, allowed: `median|mean`)
+- `FILTER_MAX_POINTS` (default: unset)
+- `NAME` (required for `make gpx` / `make course`)
 
-### Core components
-- Python scripts in `scripts/` handle data preparation, matching, filtering, and export.
-- `osmconvert` + `osmium` clip OSM to the GPX boundary.
-- OSRM (foot profile) provides `nearest`, `match`, and `trip` APIs.
-- Overpass runs on the clipped dataset to map matched nodes back to OSM way IDs.
-
-### Data flow
-1) GPX files are optionally simplified (`make compress` via `gpsbabel`).
-2) `scripts/extract.py` flattens all GPX points into `data/gpx.csv`.
-3) `scripts/boundary.py` builds `data/boundary.poly` from those points.
-4) `make osmextract` clips OSM to boundary and prepares Overpass input.
-5) `make docker` starts local OSRM + Overpass services.
-6) `scripts/match.py` snaps points to OSM and stores matched points/ways in `data/osm-gpx.csv`.
-7) `scripts/filter.py` keeps shape-defining points (furthest from route center first) and removes near-duplicates into `data/filtered-osm-gpx.csv`.
-8) `scripts/trip.py` requests OSRM trip optimization, recursively splits unsolved point sets on `NoTrips`, then runs chunk-set optimization to minimize route count; unsplittable tiny chunks use passthrough geometry only as last fallback, and output is written with `route_id` to `data/trip.csv`.
-9) `scripts/gpx.py` converts route CSV to GPX. It writes one GPX when a single route is solvable, or multiple `data/trip-route-*.gpx` files when splitting is required.
+Example override:
+`make parse GPX_DIR=/Users/zhenya/Documents/gpx/bavi`
 
 ## End-to-end workflow
-1) Create and populate virtualenv: `make install`
-2) Run test suite: `make test`
-3) Download country PBF once: `make country`
-4) Parse source GPX and clip OSM data:
-   - `make parse GPX_DIR=/Users/zhenya/Documents/gpx/bavi`
-5) Start OSRM + Overpass: `make docker`
-6) Build final course: `make course NAME="Ba Vi"`
-   - Optional filter tuning: `make filter FILTER_DISTANCE_METERS=80 FILTER_MAX_POINTS=500 FILTER_CENTER_MODE=median`
-7) Optional visualization: `make plotgpx`
+1. Install Python environment and dependencies:
+   `make install`
+2. Run tests:
+   `make test`
+3. Download country OSM PBF once:
+   `make country`
+4. Parse and prepare clipped OSM input:
+   `make parse GPX_DIR=/Users/zhenya/Documents/gpx/bavi`
+5. Start OSRM + Overpass services:
+   `make docker`
+6. Build final course GPX:
+   `make course NAME="Ba Vi"`
 
-## Script steps
+Optional filter tuning before `trip`:
+`make filter FILTER_DISTANCE_METERS=80 FILTER_MAX_POINTS=500 FILTER_CENTER_MODE=median`
+
+## Makefile target map
+- `make parse`: runs `compress -> extract -> boundary -> osmextract`
+- `make course`: runs `match -> filter -> trip -> gpx`
+- `make clean-data`: clears generated files under `data/` except `data/.gitignore`
+- `make clean-data-gpx`: removes only generated `*.gpx` files under `data/`
+- `make plotgpx`: plots raw GPX files from `GPX_DIR` into `data/original-gpx.jpeg`
+
+## Main outputs
+- `data/gpx.csv`: flattened points from compressed source GPX files
+- `data/boundary.poly`: buffered convex hull used for OSM clipping
+- `data/osm-gpx.csv`: matched points with OSM way IDs
+- `data/filtered-osm-gpx.csv`: spacing-filtered points
+- `data/trip.csv`: route geometry with `route_id`
+- `data/trip.gpx` (single-route case) or `data/trip-route-*.gpx` (multi-route case)
+- `data/simplified-trip.gpx` or `data/simplified-trip-route-*.gpx` (post-`gpsbabel` simplified outputs)
+- plots:
+  - `data/original-gpx.jpeg`
+  - `data/simplified-gpx.jpeg`
+  - `data/osm-match.jpeg`
+  - `data/osm-filter.jpeg`
+  - `data/trip-gpx.jpeg`
+
+## Scripts (current behavior)
 
 ### `scripts/extract.py`
-1) Iterate files in the input directory and keep `*.gpx`.
-2) Parse each GPX with `gpxpy`.
-3) Traverse every track -> segment -> point.
-4) Collect `lat`/`lon` rows.
-5) Write a single CSV output.
+- Reads every `*.gpx` file from an input directory.
+- Extracts all track point lat/lon pairs.
+- Writes a single CSV.
 
 ### `scripts/boundary.py`
-1) Load point CSV (`lat`, `lon`) into GeoDataFrame (EPSG:4326).
-2) Reproject to EPSG:3857 so distance-based operations are in meters.
-3) Build convex hull of all points.
-4) Apply fixed 100 m buffer to hull.
-5) Reproject buffered polygon back to EPSG:4326.
-6) Write polygon coordinates to `.poly` format (`boundary` ... `END`).
+- Loads `lat/lon` CSV into GeoDataFrame.
+- Builds convex hull in metric CRS and applies fixed 100 m buffer.
+- Writes `.poly` boundary file.
 
 ### `scripts/ways.py`
-1) Parse OSM file with `osmium.SimpleHandler`.
-2) Store all node IDs -> `(lat, lon)` coordinates.
-3) Store all way IDs -> ordered node ID lists.
-4) Materialize each way as `way_id` + resolved node coordinates.
-5) Write result CSV.
+- Parses local OSM with `osmium`.
+- Collects way IDs and their resolved node coordinates.
+- Writes ways CSV.
 
 ### `scripts/match.py`
-1) Read input CSV points.
-2) For each adjacent point pair:
-3) Call OSRM `/match/v1/foot` with 20 m radiuses.
-4) For each returned tracepoint, call OSRM `/nearest/v1/foot` to get nearby node IDs.
-5) Query Overpass (`way(bn)`) for way IDs using those nodes.
-6) Keep matched points that have non-empty way lists.
-7) Drop duplicate coordinates and write CSV (`lat`, `lon`, `ways`).
+- For each adjacent point pair, calls OSRM `/match/v1/foot`.
+- Calls OSRM `/nearest/v1/foot` for matched tracepoints.
+- Queries Overpass for way IDs from nearest nodes.
+- Writes deduplicated matched points (`lat`, `lon`, `ways`).
 
 ### `scripts/filter.py`
-1) Read matched point CSV.
-2) Compute route center (`median` by default, `mean` optional).
-3) Rank points by distance from center (furthest first).
-4) Keep ranked points while enforcing minimum spacing (`100 m` default).
-5) Optionally cap retained points via `--max-points`.
-6) Re-sort kept points to original input order and write filtered CSV.
+- Keeps points furthest from route center first.
+- Enforces minimum spacing (`--distance-meters`, default `100`).
+- Supports optional caps (`--max-points`) and center mode (`--center-mode`).
+- Preserves original point order in output.
 
 ### `scripts/trip.py`
-1) Read filtered point CSV.
-2) Build OSRM `/trip/v1/foot` coordinate string (`lon,lat;...`).
-3) Request full overview polyline (`polyline6`).
-4) If OSRM returns `NoTrips`, split points into two spatial chunks and retry per chunk.
-5) Optimize chunk grouping (exact search for practical chunk counts) to minimize final route count when OSRM can solve combined chunks.
-6) Apply bounded fallback downsampling only for tiny chunks that cannot be split further.
-7) If OSRM still cannot solve a tiny chunk, emit passthrough geometry for that chunk so coverage is preserved.
-8) Validate response status and payload (`code=Ok`, trip exists, geometry exists).
-9) Decode polyline geometry to `(lat, lon)` sequence.
-10) Write route CSV with `route_id`.
+- Calls OSRM `/trip/v1/foot` on filtered points.
+- On `NoTrips`, recursively splits chunks.
+- Uses exact chunk optimization for smaller chunk counts, greedy merge for larger ones.
+- Uses bounded downsampling for unsplittable tiny chunks; if still unsolved, exports passthrough geometry for that chunk.
+- Writes CSV with `route_id`.
 
 ### `scripts/gpx.py`
-1) Read route CSV.
-2) Create GPX document with metadata (`name`, fixed author).
-3) Group by `route_id` when present.
-4) Append each CSV point as a GPX track point.
-5) Serialize one GPX (`trip.gpx`) or multiple split GPX files (`trip-route-*.gpx`).
+- Converts trip CSV to GPX track(s).
+- Single route: writes the requested output path (usually `data/trip.gpx`).
+- Multiple routes: writes numbered files like `data/trip-route-01.gpx`, `data/trip-route-02.gpx`, etc.
 
 ### `scripts/plot.py`
-1) Read CSV points.
-2) Scatter points on a Matplotlib axis.
-3) Add CartoDB Positron basemap via `contextily`.
-4) Auto-fit extent to point bounds and hide ticks.
-5) Save image.
+- Plots CSV points on CartoDB Positron basemap and saves image.
 
 ### `scripts/plotgpx.py`
-1) Collect all GPX files in a directory.
-2) Parse each file and build `LineString` geometries per segment.
-3) Create per-file colored GeoDataFrames.
-4) Reproject to EPSG:3857 and plot on shared axis.
-5) Add basemap + legend and save image.
+- Accepts either a directory or a glob pattern (for example `data/trip-route-*.gpx`).
+- Plots one or more GPX tracks on a shared basemap and saves image.
