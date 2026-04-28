@@ -6,7 +6,12 @@ from unittest import mock
 import pandas as pd
 import polyline
 
-from scripts.trip import NO_TRIPS_CODE, TripError, get_trip
+from scripts.trip import (
+    NO_TRIPS_CODE,
+    TripError,
+    _select_retry_points,
+    get_trip,
+)
 
 
 class FakeResponse:
@@ -20,6 +25,21 @@ class FakeResponse:
 
 
 class TripTests(unittest.TestCase):
+    def test_select_retry_points_keeps_even_route_spread(self):
+        df = pd.DataFrame(
+            [
+                {"lat": 0.0, "lon": 100.0},
+                {"lat": 0.0, "lon": 101.0},
+                {"lat": 0.0, "lon": 102.0},
+                {"lat": 0.0, "lon": 103.0},
+                {"lat": 0.0, "lon": 104.0},
+            ]
+        )
+
+        selected = _select_retry_points(df, 3)
+
+        self.assertEqual(selected["lon"].tolist(), [100.0, 102.0, 104.0])
+
     def test_get_trip_retries_no_trips_then_raises(self):
         df = pd.DataFrame(
             [
@@ -44,11 +64,18 @@ class TripTests(unittest.TestCase):
         with mock.patch(
             "scripts.trip.requests.get", return_value=response
         ) as mock_get:
-            with self.assertRaises(TripError) as err:
-                get_trip(df, "unused.csv")
+            with self.assertLogs("scripts.trip", level="INFO") as logs:
+                with self.assertRaises(TripError) as err:
+                    get_trip(df, "unused.csv")
 
-        self.assertIn("NoTrips", str(err.exception))
+        self.assertIn("failed after 2 retries", str(err.exception))
         self.assertEqual(mock_get.call_count, 3)
+        self.assertTrue(
+            any("Retry 1 with 3 points." in line for line in logs.output)
+        )
+        self.assertTrue(
+            any("Retry 2 with 2 points." in line for line in logs.output)
+        )
 
     def test_get_trip_raises_when_trips_missing(self):
         df = pd.DataFrame(
@@ -94,13 +121,21 @@ class TripTests(unittest.TestCase):
                 "scripts.trip.requests.get",
                 side_effect=[first_response, second_response],
             ) as mock_get:
-                get_trip(df, str(trip_csv))
+                with self.assertLogs("scripts.trip", level="INFO") as logs:
+                    get_trip(df, str(trip_csv))
 
             written = pd.read_csv(trip_csv)
 
         self.assertEqual(mock_get.call_count, 2)
         self.assertEqual(list(written.columns), ["lat", "lon"])
         self.assertEqual(len(written), 2)
+        self.assertTrue(
+            any(
+                "OSRM trip succeeded after 1 retries, using 3 points."
+                in line
+                for line in logs.output
+            )
+        )
 
         second_call_url = mock_get.call_args_list[1][0][0]
         second_call_coords = second_call_url.split("/trip/v1/foot/")[-1]

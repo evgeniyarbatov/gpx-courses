@@ -28,7 +28,7 @@ Create a single route/course from multiple GPX files by:
 5) `make docker` starts local OSRM + Overpass services.
 6) `scripts/match.py` snaps points to OSM and stores matched points/ways in `data/osm-gpx.csv`.
 7) `scripts/filter.py` keeps shape-defining points (furthest from route center first) and removes near-duplicates into `data/filtered-osm-gpx.csv`.
-8) `scripts/trip.py` requests OSRM trip optimization and retries with fewer center-priority points when OSRM returns `NoTrips`, then writes route geometry to `data/trip.csv`.
+8) `scripts/trip.py` requests OSRM trip optimization and retries with fewer evenly downsampled points when OSRM returns `NoTrips`, then writes route geometry to `data/trip.csv`.
 9) `scripts/gpx.py` converts route CSV to `data/trip.gpx` (and Makefile also writes a simplified GPX copy).
 
 ## End-to-end workflow
@@ -86,10 +86,11 @@ Create a single route/course from multiple GPX files by:
 1) Read filtered point CSV.
 2) Build OSRM `/trip/v1/foot` coordinate string (`lon,lat;...`).
 3) Request full overview polyline (`polyline6`).
-4) If OSRM returns `NoTrips`, retry with fewer high-priority points (closest-to-center points are removed first).
+4) If OSRM returns `NoTrips`, retry with fewer evenly downsampled points to keep route-wide coverage.
 5) Validate response status and payload (`code=Ok`, trip exists, geometry exists).
 6) Decode polyline geometry to `(lat, lon)` sequence.
 7) Write route CSV.
+8) Log attempt count, point count per attempt, retries, and final point count used on success/failure.
 
 ### `scripts/gpx.py`
 1) Read route CSV.
