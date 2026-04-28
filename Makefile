@@ -100,12 +100,15 @@ osmextract:
 	$(OSM_WAYS)
 
 docker:
-	@open -a Docker
-	@while ! docker info > /dev/null 2>&1; do \
-			sleep 1; \
+	@colima start --runtime containerd
+	@while ! colima status 2>&1 | grep -qi "running"; do \
+		sleep 1; \
 	done
-	@docker stop $$(docker ps -a -q)
-	@docker compose up --build -d
+	@containers=$$(colima nerdctl -- ps -a -q); \
+	if [ -n "$$containers" ]; then \
+		colima nerdctl -- stop $$containers; \
+	fi
+	@colima nerdctl -- compose up --build -d
 
 match:
 	@echo "Matching..."
@@ -163,8 +166,3 @@ parse: compress extract boundary osmextract
 
 course: match filter trip gpx
 	@echo "Course route complete."
-
-cleanvenv:
-	@rm -rf $(VENV_PATH)
-
-.PHONY: venv install format lint plotgpx compress extract boundary country osmextract docker match filter trip gpx pipeline cleanvenv
