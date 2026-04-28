@@ -149,9 +149,17 @@ gpx:
 	$(TRIP_CSV) \
 	$(TRIP_GPX)
 
-	@gpsbabel -i gpx -f $(TRIP_GPX) \
-	-x simplify,crosstrack,error=0.01k \
-	-o gpx -F $(SIMPLIFIED_TRIP_GPX)
+	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
+		for file in data/trip-route-*.gpx; do \
+			gpsbabel -i gpx -f "$$file" \
+			-x simplify,crosstrack,error=0.01k \
+			-o gpx -F "data/simplified-$$(basename $$file)"; \
+		done; \
+	else \
+		gpsbabel -i gpx -f $(TRIP_GPX) \
+		-x simplify,crosstrack,error=0.01k \
+		-o gpx -F $(SIMPLIFIED_TRIP_GPX); \
+	fi
 
 	@$(PYTHON) scripts/plotgpx.py \
 	$(GPX_COMPRESSED_DIR) \

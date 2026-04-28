@@ -28,8 +28,8 @@ Create a single route/course from multiple GPX files by:
 5) `make docker` starts local OSRM + Overpass services.
 6) `scripts/match.py` snaps points to OSM and stores matched points/ways in `data/osm-gpx.csv`.
 7) `scripts/filter.py` keeps shape-defining points (furthest from route center first) and removes near-duplicates into `data/filtered-osm-gpx.csv`.
-8) `scripts/trip.py` requests OSRM trip optimization and retries with fewer evenly downsampled points when OSRM returns `NoTrips`, then writes route geometry to `data/trip.csv`.
-9) `scripts/gpx.py` converts route CSV to `data/trip.gpx` (and Makefile also writes a simplified GPX copy).
+8) `scripts/trip.py` requests OSRM trip optimization, recursively splits unsolved point sets on `NoTrips`, then runs chunk-set optimization to minimize route count; unsplittable tiny chunks use passthrough geometry only as last fallback, and output is written with `route_id` to `data/trip.csv`.
+9) `scripts/gpx.py` converts route CSV to GPX. It writes one GPX when a single route is solvable, or multiple `data/trip-route-*.gpx` files when splitting is required.
 
 ## End-to-end workflow
 1) Create and populate virtualenv: `make install`
@@ -86,18 +86,20 @@ Create a single route/course from multiple GPX files by:
 1) Read filtered point CSV.
 2) Build OSRM `/trip/v1/foot` coordinate string (`lon,lat;...`).
 3) Request full overview polyline (`polyline6`).
-4) If OSRM returns `NoTrips`, retry with fewer evenly downsampled points to keep route-wide coverage.
-5) Validate response status and payload (`code=Ok`, trip exists, geometry exists).
-6) Decode polyline geometry to `(lat, lon)` sequence.
-7) Write route CSV.
-8) Log attempt count, point count per attempt, retries, and final point count used on success/failure.
+4) If OSRM returns `NoTrips`, split points into two spatial chunks and retry per chunk.
+5) Optimize chunk grouping (exact search for practical chunk counts) to minimize final route count when OSRM can solve combined chunks.
+6) Apply bounded fallback downsampling only for tiny chunks that cannot be split further.
+7) If OSRM still cannot solve a tiny chunk, emit passthrough geometry for that chunk so coverage is preserved.
+8) Validate response status and payload (`code=Ok`, trip exists, geometry exists).
+9) Decode polyline geometry to `(lat, lon)` sequence.
+10) Write route CSV with `route_id`.
 
 ### `scripts/gpx.py`
 1) Read route CSV.
 2) Create GPX document with metadata (`name`, fixed author).
-3) Create one track and one segment.
+3) Group by `route_id` when present.
 4) Append each CSV point as a GPX track point.
-5) Serialize GPX XML to file.
+5) Serialize one GPX (`trip.gpx`) or multiple split GPX files (`trip-route-*.gpx`).
 
 ### `scripts/plot.py`
 1) Read CSV points.
