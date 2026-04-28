@@ -6,7 +6,7 @@ from unittest import mock
 import pandas as pd
 import polyline
 
-from scripts.trip import TripError, get_trip
+from scripts.trip import TripError, _reduce_points, get_trip
 
 
 class FakeResponse:
@@ -20,6 +20,27 @@ class FakeResponse:
 
 
 class TripTests(unittest.TestCase):
+    def test_reduce_points_keeps_far_apart_points(self):
+        df = pd.DataFrame(
+            [
+                {"lat": 0.0000, "lon": 0.0000},
+                {"lat": 0.0001, "lon": 0.0001},
+                {"lat": 10.0000, "lon": 10.0000},
+                {"lat": 0.0002, "lon": 0.0002},
+                {"lat": -10.0000, "lon": -10.0000},
+            ]
+        )
+
+        reduced = _reduce_points(df, 3)
+        kept_points = {
+            (round(row.lat, 4), round(row.lon, 4))
+            for row in reduced.itertuples(index=False)
+        }
+
+        self.assertIn((10.0, 10.0), kept_points)
+        self.assertIn((-10.0, -10.0), kept_points)
+        self.assertEqual(len(reduced), 3)
+
     def test_get_trip_raises_for_no_trips_error(self):
         df = pd.DataFrame(
             [{"lat": 21.0, "lon": 105.0}, {"lat": 21.1, "lon": 105.1}]

@@ -7,6 +7,7 @@ import pandas as pd
 
 OSRM_TRIP_URL = "http://localhost:6000/trip/v1/foot/"
 MIN_TRIP_POINTS = 2
+EARTH_RADIUS_M = 6371000.0
 
 
 class TripError(RuntimeError):
@@ -97,28 +98,82 @@ def _request_trip(df):
     return _extract_trip_geometry(response)
 
 
+def _haversine_distance_m(point_a, point_b):
+    lat1, lon1 = point_a
+    lat2, lon2 = point_b
+
+    lat1_rad = math.radians(lat1)
+    lon1_rad = math.radians(lon1)
+    lat2_rad = math.radians(lat2)
+    lon2_rad = math.radians(lon2)
+
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+
+    hav = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
+    )
+    return 2 * EARTH_RADIUS_M * math.asin(math.sqrt(hav))
+
+
+def _pick_farthest_pair(points):
+    max_distance = -1.0
+    first_idx = 0
+    second_idx = 1
+
+    point_count = len(points)
+    for idx_a in range(point_count):
+        for idx_b in range(idx_a + 1, point_count):
+            distance = _haversine_distance_m(
+                points[idx_a],
+                points[idx_b],
+            )
+            if distance > max_distance:
+                max_distance = distance
+                first_idx = idx_a
+                second_idx = idx_b
+
+    return first_idx, second_idx
+
+
 def _reduce_points(df, target_count):
     point_count = len(df)
     if target_count >= point_count:
         return df
 
-    step = (point_count - 1) / (target_count - 1)
-    indices = []
-    for i in range(target_count):
-        indices.append(int(round(i * step)))
+    points = [
+        (float(row.lat), float(row.lon)) for row in df.itertuples(index=False)
+    ]
 
-    deduped_indices = []
-    seen = set()
-    for idx in indices:
-        if idx in seen:
-            continue
-        deduped_indices.append(idx)
-        seen.add(idx)
+    first_idx, second_idx = _pick_farthest_pair(points)
+    selected = [first_idx, second_idx]
+    selected_set = {first_idx, second_idx}
 
-    if deduped_indices[-1] != point_count - 1:
-        deduped_indices[-1] = point_count - 1
+    while len(selected) < target_count:
+        best_idx = None
+        best_min_distance = -1.0
 
-    return df.iloc[deduped_indices].reset_index(drop=True)
+        for candidate_idx, candidate_point in enumerate(points):
+            if candidate_idx in selected_set:
+                continue
+
+            min_distance = min(
+                _haversine_distance_m(candidate_point, points[selected_idx])
+                for selected_idx in selected
+            )
+            if min_distance > best_min_distance:
+                best_min_distance = min_distance
+                best_idx = candidate_idx
+
+        if best_idx is None:
+            break
+
+        selected.append(best_idx)
+        selected_set.add(best_idx)
+
+    selected.sort()
+    return df.iloc[selected].reset_index(drop=True)
 
 
 def _next_target_count(current_count):
