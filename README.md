@@ -68,7 +68,7 @@ Optional filter tuning (script-level):
   - `data/osm-filter.jpeg`
   - `data/trip-gpx.jpeg`
 
-## Scripts (current behavior)
+## Scripts
 
 ### `scripts/extract.py`
 - Reads every `*.gpx` file from an input directory.
