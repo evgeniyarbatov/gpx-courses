@@ -80,11 +80,6 @@ Optional filter tuning (script-level):
 - Builds convex hull in metric CRS and applies fixed 100 m buffer.
 - Writes `.poly` boundary file.
 
-### `scripts/ways.py`
-- Parses local OSM with `osmium`.
-- Collects way IDs and their resolved node coordinates.
-- Writes ways CSV.
-
 ### `scripts/match.py`
 - For each adjacent point pair, calls OSRM `/match/v1/foot`.
 - Calls OSRM `/nearest/v1/foot` for matched tracepoints.
