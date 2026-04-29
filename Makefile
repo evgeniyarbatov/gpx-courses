@@ -52,8 +52,7 @@ compress: gpx-input-check clean-data-gpx
 extract:
 	@$(PYTHON) scripts/extract.py
 
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plotgpx.py \
+	@$(PYTHON) scripts/plotgpx.py \
 	data/gpx_compressed \
 	"Simplified GPX" \
 	data/simplified-gpx.jpeg
@@ -95,8 +94,7 @@ filter:
 	@echo "Filtering..."
 	@$(PYTHON) scripts/filter.py
 
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plot.py \
+	@$(PYTHON) scripts/plot.py \
 	data/filtered-osm-gpx.csv \
 	"Center-Distance Filtered Match Points" \
 	data/osm-filter.jpeg
@@ -105,8 +103,7 @@ trip:
 	@echo "Making trip..."
 	@$(PYTHON) scripts/trip.py
 
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plot.py \
+	@$(PYTHON) scripts/plot.py \
 	data/trip.csv \
 	"OSRM Trip Route (CSV Output)" \
 	data/trip-gpx.jpeg
