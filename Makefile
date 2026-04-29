@@ -5,32 +5,11 @@ PIP := $(VENV_PATH)/bin/pip
 REQUIREMENTS := requirements.txt
 
 GPX_DIR ?=
-GPX_COMPRESSED_DIR := data/gpx_compressed
-GPX_FILES := $(wildcard $(GPX_DIR)/*.gpx)
-COMPRESSED_GPX_FILES := $(patsubst $(GPX_DIR)/%.gpx,$(GPX_COMPRESSED_DIR)/%.gpx,$(GPX_FILES))
-
-GPX_CSV := data/gpx.csv
-BOUNDARY_POLY := data/boundary.poly
+NAME ?=
 
 OSM_DIR := osm
 OSM_URL := https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
 COUNTRY_OSM_FILE := $$(basename $(OSM_URL))
-
-OSM_WAYS := data/osm-ways.csv
-OSM_GPX_CSV := data/osm-gpx.csv
-FILTERED_OSM_GPX_CSV := data/filtered-osm-gpx.csv
-INTERPOLATED_OSM_GPX_CSV := data/interpolated-osm-gpx.csv
-SORTED_OSM_GPX_CSV := data/sorted-osm-gpx.csv
-OSM_MATCH_PLOT := data/matched-osm.jpeg
-
-TRIP_CSV := data/trip.csv
-TRIP_GPX := data/trip.gpx
-SIMPLIFIED_TRIP_GPX := data/simplified-trip.gpx
-
-FILTER_DISTANCE_METERS ?= 100
-FILTER_CENTER_MODE ?= median
-FILTER_MAX_POINTS ?=
-FILTER_MAX_POINTS_ARG := $(if $(FILTER_MAX_POINTS), --max-points $(FILTER_MAX_POINTS),)
 
 .PHONY: \
 	venv install test \
@@ -67,46 +46,33 @@ plotgpx: gpx-input-check
 	"Original GPX" \
 	data/original-gpx.jpeg
 
-compress: gpx-input-check clean-data-gpx $(COMPRESSED_GPX_FILES)
-	@test -n "$(strip $(GPX_FILES))" || (echo "Error: no .gpx files found in GPX_DIR: $(GPX_DIR)" >&2; exit 1)
-
-$(GPX_COMPRESSED_DIR)/%.gpx: $(GPX_DIR)/%.gpx
-	@mkdir -p $(GPX_COMPRESSED_DIR)
-
-	@gpsbabel -i gpx -f $< \
-	-x simplify,crosstrack,error=0.01k \
-	-o gpx -F $@
+compress: gpx-input-check clean-data-gpx
+	@$(PYTHON) scripts/compress.py "$(GPX_DIR)"
 
 extract:
-	@$(PYTHON) scripts/extract.py \
-	$(GPX_COMPRESSED_DIR) \
-	$(GPX_CSV)
+	@$(PYTHON) scripts/extract.py
 
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plotgpx.py \
-	$(GPX_COMPRESSED_DIR) \
+	data/gpx_compressed \
 	"Simplified GPX" \
 	data/simplified-gpx.jpeg
 
 boundary:
-	@$(PYTHON) scripts/boundary.py \
-	$(GPX_CSV) \
-	$(BOUNDARY_POLY)
+	@$(PYTHON) scripts/boundary.py
 
 country:
-	if [ ! -f $(OSM_DIR)/$(COUNTRY_OSM_FILE) ]; then \
+	@if [ ! -f $(OSM_DIR)/$(COUNTRY_OSM_FILE) ]; then \
 		wget $(OSM_URL) -P $(OSM_DIR); \
 	fi
 
 osmextract:
-	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=$(BOUNDARY_POLY) -o=$(OSM_DIR)/foot/gpx.osm.pbf
+	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=data/boundary.poly -o=$(OSM_DIR)/foot/gpx.osm.pbf
 	@osmium cat --overwrite $(OSM_DIR)/foot/gpx.osm.pbf -o $(OSM_DIR)/gpx.osm
 
 	@bzip2 -c $(OSM_DIR)/gpx.osm > $(OSM_DIR)/overpass-api/gpx.osm.bz2
 
-	@$(PYTHON) scripts/ways.py \
-	$(OSM_DIR)/gpx.osm \
-	$(OSM_WAYS)
+	@$(PYTHON) scripts/ways.py
 
 docker:
 	@colima start --runtime containerd
@@ -118,48 +84,37 @@ docker:
 
 match:
 	@echo "Matching..."
-	@$(PYTHON) scripts/match.py \
-	$(GPX_CSV) \
-	$(OSM_GPX_CSV)
+	@$(PYTHON) scripts/match.py
 
 	@$(PYTHON) scripts/plot.py \
-	$(OSM_GPX_CSV) \
+	data/osm-gpx.csv \
 	"OSRM-Matched Points with OSM Way IDs" \
 	data/osm-match.jpeg
 
 filter:
 	@echo "Filtering..."
-	@$(PYTHON) scripts/filter.py \
-	$(OSM_GPX_CSV) \
-	$(FILTERED_OSM_GPX_CSV) \
-	--distance-meters $(FILTER_DISTANCE_METERS) \
-	--center-mode $(FILTER_CENTER_MODE)$(FILTER_MAX_POINTS_ARG)
+	@$(PYTHON) scripts/filter.py
 
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plot.py \
-	$(FILTERED_OSM_GPX_CSV) \
+	data/filtered-osm-gpx.csv \
 	"Center-Distance Filtered Match Points" \
 	data/osm-filter.jpeg
 
 trip:
 	@echo "Making trip..."
-	@$(PYTHON) scripts/trip.py \
-	$(FILTERED_OSM_GPX_CSV) \
-	$(TRIP_CSV)
+	@$(PYTHON) scripts/trip.py
 
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/plot.py \
-	$(TRIP_CSV) \
+	data/trip.csv \
 	"OSRM Trip Route (CSV Output)" \
 	data/trip-gpx.jpeg
 
 gpx:
 	@test -n "$(strip $(NAME))" || (echo "Error: NAME is required. Example: make gpx NAME=\"Soc Son\"" >&2; exit 1)
 	@echo "Writing GPX..."
-	@$(PYTHON) scripts/gpx.py \
-	"$(NAME)" \
-	$(TRIP_CSV) \
-	$(TRIP_GPX)
+	@$(PYTHON) scripts/gpx.py "$(NAME)"
 
 	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
 		for file in data/trip-route-*.gpx; do \
@@ -168,15 +123,15 @@ gpx:
 			-o gpx -F "data/simplified-$$(basename $$file)"; \
 		done; \
 	else \
-		gpsbabel -i gpx -f $(TRIP_GPX) \
+		gpsbabel -i gpx -f data/trip.gpx \
 		-x simplify,crosstrack,error=0.01k \
-		-o gpx -F $(SIMPLIFIED_TRIP_GPX); \
+		-o gpx -F data/simplified-trip.gpx; \
 	fi
 
 	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
 		$(PYTHON) scripts/plotgpx.py "data/trip-route-*.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
 	else \
-		$(PYTHON) scripts/plotgpx.py "$(TRIP_GPX)" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
+		$(PYTHON) scripts/plotgpx.py "data/trip.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
 	fi
 
 parse: compress extract boundary osmextract

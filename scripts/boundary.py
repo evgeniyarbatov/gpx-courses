@@ -1,7 +1,10 @@
-import sys
+import argparse
 
 import pandas as pd
 import geopandas as gpd
+
+DEFAULT_GPX_CSV = "data/gpx.csv"
+DEFAULT_BOUNDARY_POLY = "data/boundary.poly"
 
 
 def main(csv_file, boundary_file):
@@ -33,5 +36,15 @@ def main(csv_file, boundary_file):
         f.write("END\n")
 
 
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description="Build a buffered convex-hull boundary .poly from GPX CSV points."
+    )
+    parser.add_argument("csv_file", nargs="?", default=DEFAULT_GPX_CSV)
+    parser.add_argument("boundary_file", nargs="?", default=DEFAULT_BOUNDARY_POLY)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    main(*sys.argv[1:])
+    args = _parse_args()
+    main(args.csv_file, args.boundary_file)

@@ -1,7 +1,10 @@
-import sys
+import argparse
 import osmium
 
 import pandas as pd
+
+DEFAULT_OSM_FILE = "osm/gpx.osm"
+DEFAULT_WAYS_CSV = "data/osm-ways.csv"
 
 
 class WayNodeHandler(osmium.SimpleHandler):
@@ -48,4 +51,10 @@ def main(
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description="Extract OSM way IDs and node coordinates into CSV."
+    )
+    parser.add_argument("osm_filename", nargs="?", default=DEFAULT_OSM_FILE)
+    parser.add_argument("osm_ways_filename", nargs="?", default=DEFAULT_WAYS_CSV)
+    args = parser.parse_args()
+    main(args.osm_filename, args.osm_ways_filename)

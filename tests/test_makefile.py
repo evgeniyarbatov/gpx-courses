@@ -4,6 +4,18 @@ from pathlib import Path
 
 
 class MakefileTests(unittest.TestCase):
+    def test_compress_uses_script_wrapper(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            ["make", "-n", "compress", "GPX_DIR=/tmp/input-gpx"],
+            cwd=repo_root,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertIn('scripts/compress.py "/tmp/input-gpx"', result.stdout)
+
     def test_parse_deletes_existing_data_gpx_files_first(self):
         repo_root = Path(__file__).resolve().parents[1]
         result = subprocess.run(

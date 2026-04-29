@@ -18,11 +18,7 @@ Build a clean course GPX from raw activity traces by:
 - `colima` + `nerdctl` (for local OSRM + Overpass via `docker-compose.yaml`)
 
 ## Key Makefile variables
-- `GPX_DIR` (required; no default)
-- `GPX_COMPRESSED_DIR` (default: `data/gpx_compressed`)
-- `FILTER_DISTANCE_METERS` (default: `100`)
-- `FILTER_CENTER_MODE` (default: `median`, allowed: `median|mean`)
-- `FILTER_MAX_POINTS` (default: unset)
+- `GPX_DIR` (required for `make plotgpx` and `make parse`)
 - `NAME` (required for `make gpx` / `make course`)
 
 Example override:
@@ -42,8 +38,8 @@ Example override:
 6. Build final course GPX:
    `make course NAME="Ba Vi"`
 
-Optional filter tuning before `trip`:
-`make filter FILTER_DISTANCE_METERS=80 FILTER_MAX_POINTS=500 FILTER_CENTER_MODE=median`
+Optional filter tuning (script-level):
+`./.venv/bin/python scripts/filter.py data/osm-gpx.csv data/filtered-osm-gpx.csv --distance-meters 80 --max-points 500 --center-mode median`
 
 ## Makefile target map
 - `make parse`: runs `compress -> extract -> boundary -> osmextract`

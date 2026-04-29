@@ -1,4 +1,4 @@
-import sys
+import argparse
 import logging
 
 import pandas as pd
@@ -12,6 +12,8 @@ RETRY_REDUCTION_RATIO = 0.85
 MIN_CHUNK_SPLIT_POINTS = 4
 MIN_DOWNSAMPLED_POINT_RATIO = 0.85
 MAX_EXACT_OPTIMIZATION_CHUNKS = 12
+DEFAULT_INPUT_CSV = "data/filtered-osm-gpx.csv"
+DEFAULT_OUTPUT_CSV = "data/trip.csv"
 logger = logging.getLogger(__name__)
 
 
@@ -563,4 +565,10 @@ def main(
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description="Build optimized trip route geometry from filtered points."
+    )
+    parser.add_argument("gpx_csv_file", nargs="?", default=DEFAULT_INPUT_CSV)
+    parser.add_argument("trip_csv_file", nargs="?", default=DEFAULT_OUTPUT_CSV)
+    args = parser.parse_args()
+    main(args.gpx_csv_file, args.trip_csv_file)

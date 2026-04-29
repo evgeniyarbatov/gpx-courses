@@ -1,5 +1,5 @@
 import os
-import sys
+import argparse
 import requests
 
 import pandas as pd
@@ -9,6 +9,8 @@ OVERPASS_API_URL = os.getenv(
     "OVERPASS_API_URL", "http://localhost:18080/api/interpreter"
 )
 MATCH_RADIUS_METERS = 20
+DEFAULT_GPX_CSV = "data/gpx.csv"
+DEFAULT_MATCHED_CSV = "data/osm-gpx.csv"
 
 
 def get_nodes(lat, lon):
@@ -103,4 +105,10 @@ def main(csv_file, matched_csv_file):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description="Match GPX points to OSM ways via local OSRM and Overpass."
+    )
+    parser.add_argument("csv_file", nargs="?", default=DEFAULT_GPX_CSV)
+    parser.add_argument("matched_csv_file", nargs="?", default=DEFAULT_MATCHED_CSV)
+    args = parser.parse_args()
+    main(args.csv_file, args.matched_csv_file)

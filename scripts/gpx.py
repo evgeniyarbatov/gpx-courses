@@ -1,8 +1,11 @@
-import sys
+import argparse
 from pathlib import Path
 import gpxpy
 
 import pandas as pd
+
+DEFAULT_TRIP_CSV = "data/trip.csv"
+DEFAULT_TRIP_GPX = "data/trip.gpx"
 
 
 def make_gpx(df, name, trip_gpx):
@@ -55,8 +58,8 @@ def write_gpx_files(df, name, output_gpx_path):
 
 def main(
     name,
-    trip_csv,
-    trip_gpx,
+    trip_csv=DEFAULT_TRIP_CSV,
+    trip_gpx=DEFAULT_TRIP_GPX,
 ):
     df = pd.read_csv(trip_csv)
 
@@ -66,4 +69,11 @@ def main(
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        description="Convert trip CSV geometry to GPX route files."
+    )
+    parser.add_argument("name", help="GPX track name.")
+    parser.add_argument("trip_csv", nargs="?", default=DEFAULT_TRIP_CSV)
+    parser.add_argument("trip_gpx", nargs="?", default=DEFAULT_TRIP_GPX)
+    args = parser.parse_args()
+    main(args.name, args.trip_csv, args.trip_gpx)

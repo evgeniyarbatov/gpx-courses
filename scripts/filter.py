@@ -1,5 +1,4 @@
 import argparse
-import sys
 
 import pandas as pd
 from geopy.distance import geodesic
@@ -8,6 +7,8 @@ FILTER_DISTANCE_METERS = 100
 CENTER_MODE_MEDIAN = "median"
 CENTER_MODE_MEAN = "mean"
 CENTER_MODES = (CENTER_MODE_MEDIAN, CENTER_MODE_MEAN)
+DEFAULT_INPUT_CSV = "data/osm-gpx.csv"
+DEFAULT_OUTPUT_CSV = "data/filtered-osm-gpx.csv"
 
 
 def _get_center(df, center_mode):
@@ -72,15 +73,17 @@ def filter_by_center_distance(
     return df.loc[kept_indices].reset_index(drop=True)
 
 
-def _parse_args(argv):
+def _parse_args():
     parser = argparse.ArgumentParser(
         description=(
             "Keep points furthest from route center first while enforcing "
             "minimum spacing."
         )
     )
-    parser.add_argument("gpx_csv_file")
-    parser.add_argument("filtered_gpx_csv_file")
+    parser.add_argument("gpx_csv_file", nargs="?", default=DEFAULT_INPUT_CSV)
+    parser.add_argument(
+        "filtered_gpx_csv_file", nargs="?", default=DEFAULT_OUTPUT_CSV
+    )
     parser.add_argument(
         "--distance-meters",
         type=float,
@@ -99,7 +102,7 @@ def _parse_args(argv):
         default=CENTER_MODE_MEDIAN,
         help="How to compute route center for point ranking.",
     )
-    return parser.parse_args(argv)
+    return parser.parse_args()
 
 
 def main(
@@ -122,7 +125,7 @@ def main(
 
 
 if __name__ == "__main__":
-    args = _parse_args(sys.argv[1:])
+    args = _parse_args()
     main(
         args.gpx_csv_file,
         args.filtered_gpx_csv_file,
