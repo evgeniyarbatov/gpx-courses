@@ -8,6 +8,11 @@ Build a clean course GPX from raw activity traces by:
 5. generating optimized trip route geometry,
 6. exporting one or more final GPX routes.
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/56eea2f9-a106-4bbb-b6e4-d648704262da" width="40%" />
+  <img src="https://github.com/user-attachments/assets/42aa2469-6862-480e-98a5-0f171e8b214b" width="40%" />
+</p>
+
 ## Prerequisites
 - Python 3 + `venv`
 - `gpsbabel`
