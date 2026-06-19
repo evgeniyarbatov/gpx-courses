@@ -15,7 +15,7 @@ COUNTRY_OSM_FILE := $$(basename $(OSM_URL))
 	venv install test \
 	clean clean-data clean-data-gpx \
 	gpx-input-check \
-	plotgpx compress extract boundary country osmextract docker match filter trip gpx parse course
+	plotgpx compress extract boundary country osmextract docker docker-stop match filter trip gpx parse course
 
 venv:
 	@python3 -m venv $(VENV_PATH)
@@ -80,6 +80,15 @@ docker:
 	else \
 		colima nerdctl -- compose down --remove-orphans || true; \
 		colima nerdctl -- compose up --build -d; \
+	fi
+
+docker-stop:
+	@colima status >/dev/null 2>&1 || exit 0
+	@runtime=$$(colima status -j | python3 -c "import json,sys; print(json.load(sys.stdin)['runtime'])"); \
+	if [ "$$runtime" = "docker" ]; then \
+		docker compose down --remove-orphans; \
+	else \
+		colima nerdctl -- compose down --remove-orphans; \
 	fi
 
 match:
