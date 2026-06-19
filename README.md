@@ -20,7 +20,7 @@ Build a clean course GPX from raw activity traces by:
 - `osmium` CLI
 - `wget`
 - `bzip2`
-- `colima` + `nerdctl` (for local OSRM + Overpass via `docker-compose.yaml`)
+- `colima` + `docker` or `nerdctl` (for local OSRM + Overpass via `docker-compose.yaml`; `make docker` detects colima's active runtime and uses whichever CLI matches)
 
 ## Key Makefile variables
 - `GPX_DIR` (required for `make plotgpx` and `make parse`)

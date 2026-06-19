@@ -72,12 +72,15 @@ osmextract:
 	@bzip2 -c $(OSM_DIR)/gpx.osm > $(OSM_DIR)/overpass-api/gpx.osm.bz2
 
 docker:
-	@colima start --runtime containerd
-	@while ! colima status 2>&1 | grep -qi "running"; do \
-		sleep 1; \
-	done
-	@colima nerdctl -- compose down --remove-orphans || true
-	@colima nerdctl -- compose up --build -d
+	@colima status >/dev/null 2>&1 || colima start
+	@runtime=$$(colima status -j | python3 -c "import json,sys; print(json.load(sys.stdin)['runtime'])"); \
+	if [ "$$runtime" = "docker" ]; then \
+		docker compose down --remove-orphans || true; \
+		docker compose up --build -d; \
+	else \
+		colima nerdctl -- compose down --remove-orphans || true; \
+		colima nerdctl -- compose up --build -d; \
+	fi
 
 match:
 	@echo "Matching..."
