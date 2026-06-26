@@ -9,7 +9,7 @@ NAME ?=
 
 OSM_DIR := osm
 OSM_URL := https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
-COUNTRY_OSM_FILE := $$(basename $(OSM_URL))
+include $(HOME)/gitRepo/dotfiles/make/osm-country.mk
 
 .PHONY: \
 	venv install test \
@@ -60,10 +60,6 @@ extract:
 boundary:
 	@$(PYTHON) scripts/boundary.py
 
-country:
-	@if [ ! -f $(OSM_DIR)/$(COUNTRY_OSM_FILE) ]; then \
-		wget $(OSM_URL) -P $(OSM_DIR); \
-	fi
 
 osmextract:
 	@mkdir -p $(OSM_DIR)/foot $(OSM_DIR)/overpass-api
