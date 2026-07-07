@@ -27,7 +27,7 @@ Build a clean course GPX from raw activity traces by:
 - `NAME` (required for `make gpx` / `make course`)
 
 Example override:
-`make parse GPX_DIR=/Users/zhenya/Documents/gpx/bavi`
+`make parse GPX_DIR=$HOME/Documents/gpx/bavi`
 
 ## End-to-end workflow
 1. Install Python environment and dependencies:
@@ -37,7 +37,7 @@ Example override:
 3. Download country OSM PBF once:
    `make country`
 4. Parse and prepare clipped OSM input:
-   `make parse GPX_DIR=/Users/zhenya/Documents/gpx/bavi`
+   `make parse GPX_DIR=$HOME/Documents/gpx/bavi`
 5. Start OSRM + Overpass services:
    `make docker`
 6. Build final course GPX:
