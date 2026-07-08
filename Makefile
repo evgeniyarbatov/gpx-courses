@@ -18,11 +18,10 @@ include $(HOME)/gitRepo/dotfiles/make/osm-country.mk
 	plotgpx compress extract boundary country osmextract docker docker-stop match filter trip gpx parse course
 
 venv:
-	@python3 -m venv $(VENV_PATH)
+	@uv venv $(VENV_PATH)
 
 install: venv
-	@$(PIP) install --disable-pip-version-check -q --upgrade pip
-	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
+	@uv pip install -q -r $(REQUIREMENTS)
 
 test:
 	@$(PYTHON) -m unittest discover -s tests -p "test_*.py" -v
