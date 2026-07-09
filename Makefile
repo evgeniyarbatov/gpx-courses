@@ -1,8 +1,5 @@
+# Uses uv (https://docs.astral.sh/uv) for dependency management — uv sync creates/updates .venv; run commands via uv run, no manual activation.
 VENV_PATH := .venv
-
-PYTHON := $(VENV_PATH)/bin/python
-PIP := $(VENV_PATH)/bin/pip
-REQUIREMENTS := requirements.txt
 
 GPX_DIR ?=
 NAME ?=
@@ -12,19 +9,20 @@ OSM_URL := https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
 include $(HOME)/gitRepo/dotfiles/make/osm-country.mk
 
 .PHONY: \
-	venv install test \
-	clean clean-data clean-data-gpx \
+	install lock test \
+	clean clean-data clean-data-gpx cleanvenv \
 	gpx-input-check \
-	plotgpx compress extract boundary country osmextract docker docker-stop match filter trip gpx parse course
+	plotgpx compress extract boundary country osmextract docker docker-stop match filter trip gpx parse course help
 
-venv:
-	@uv venv $(VENV_PATH)
+install:
+	@uv sync
 
-install: venv
-	@uv pip install -q -r $(REQUIREMENTS)
+lock:
+	@uv lock
 
 test: install
-	@$(PYTHON) -m unittest discover -s tests -p "test_*.py" -v
+	@uv run python -m unittest discover -s tests -p "test_*.py" -v
+
 clean: clean-data
 
 clean-data:
@@ -34,25 +32,32 @@ clean-data:
 clean-data-gpx:
 	@find data -type f -name "*.gpx" -delete
 
+cleanvenv:
+	@rm -rf $(VENV_PATH)
+
 gpx-input-check:
 	@test -n "$(strip $(GPX_DIR))" || (echo "Error: GPX_DIR is required. Example: make parse GPX_DIR=/path/to/gpx-dir" >&2; exit 1)
 	@test -d "$(GPX_DIR)" || (echo "Error: GPX_DIR does not exist: $(GPX_DIR)" >&2; exit 1)
 
 plotgpx: install gpx-input-check
-	@$(PYTHON) scripts/plotgpx.py \
+	@uv run python scripts/plotgpx.py \
 	$(GPX_DIR) \
 	"Original GPX" \
 	data/original-gpx.jpeg
+
 compress: install gpx-input-check clean-data-gpx
-	@$(PYTHON) scripts/compress.py "$(GPX_DIR)"
+	@uv run python scripts/compress.py "$(GPX_DIR)"
+
 extract: install
-	@$(PYTHON) scripts/extract.py
-	@$(PYTHON) scripts/plotgpx.py \
+	@uv run python scripts/extract.py
+	@uv run python scripts/plotgpx.py \
 	data/gpx_compressed \
 	"Simplified GPX" \
 	data/simplified-gpx.jpeg
+
 boundary: install
-	@$(PYTHON) scripts/boundary.py
+	@uv run python scripts/boundary.py
+
 osmextract:
 	@mkdir -p $(OSM_DIR)/foot $(OSM_DIR)/overpass-api
 	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=data/boundary.poly -o=$(OSM_DIR)/foot/gpx.osm.pbf
@@ -81,29 +86,32 @@ docker-stop:
 
 match: install
 	@echo "Matching..."
-	@$(PYTHON) scripts/match.py
-	@$(PYTHON) scripts/plot.py \
+	@uv run python scripts/match.py
+	@uv run python scripts/plot.py \
 	data/osm-gpx.csv \
 	"OSRM-Matched Points with OSM Way IDs" \
 	data/osm-match.jpeg
+
 filter: install
 	@echo "Filtering..."
-	@$(PYTHON) scripts/filter.py
-	@$(PYTHON) scripts/plot.py \
+	@uv run python scripts/filter.py
+	@uv run python scripts/plot.py \
 	data/filtered-osm-gpx.csv \
 	"Center-Distance Filtered Match Points" \
 	data/osm-filter.jpeg
+
 trip: install
 	@echo "Making trip..."
-	@$(PYTHON) scripts/trip.py
-	@$(PYTHON) scripts/plot.py \
+	@uv run python scripts/trip.py
+	@uv run python scripts/plot.py \
 	data/trip.csv \
 	"OSRM Trip Route (CSV Output)" \
 	data/trip-gpx.jpeg
+
 gpx: install
 	@test -n "$(strip $(NAME))" || (echo "Error: NAME is required. Example: make gpx NAME=\"Soc Son\"" >&2; exit 1)
 	@echo "Writing GPX..."
-	@$(PYTHON) scripts/gpx.py "$(NAME)"
+	@uv run python scripts/gpx.py "$(NAME)"
 	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
 		for file in data/trip-route-*.gpx; do \
 			gpsbabel -i gpx -f "$$file" \
@@ -116,12 +124,31 @@ gpx: install
 		-o gpx -F data/simplified-trip.gpx; \
 	fi
 	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
-		$(PYTHON) scripts/plotgpx.py "data/trip-route-*.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
+		uv run python scripts/plotgpx.py "data/trip-route-*.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
 	else \
-		$(PYTHON) scripts/plotgpx.py "data/trip.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
+		uv run python scripts/plotgpx.py "data/trip.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
 	fi
+
 parse: compress extract boundary osmextract
 	@echo "Parsing complete."
 
 course: match filter trip gpx
 	@echo "Course route complete."
+
+help:
+	@echo "install         - uv sync deps"
+	@echo "lock            - refresh uv.lock"
+	@echo "test            - run unit tests"
+	@echo "clean/clean-data - clear data/ directory"
+	@echo "clean-data-gpx  - clear *.gpx files in data/"
+	@echo "cleanvenv       - remove .venv"
+	@echo "country         - one-time download of country OSM PBF"
+	@echo "plotgpx GPX_DIR=... - plot original GPX"
+	@echo "compress GPX_DIR=... - compress GPX files"
+	@echo "extract         - extract flattened GPX points"
+	@echo "boundary        - compute boundary polygon"
+	@echo "osmextract      - clip country OSM to boundary"
+	@echo "docker/docker-stop - start/stop OSRM + Overpass containers"
+	@echo "match/filter/trip/gpx - course pipeline stages"
+	@echo "parse           - compress + extract + boundary + osmextract"
+	@echo "course NAME=... - match + filter + trip + gpx"

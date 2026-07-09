@@ -1,0 +1,21 @@
+[project]
+name = "gpx-courses"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas",
+    "gpxpy",
+    "geopandas",
+    "shapely",
+    "requests",
+    "matplotlib",
+    "contextily",
+    "geopy",
+    "polyline",
+    "pyproj",
+    "osmium",
+    "haversine",
+]
+
+[tool.uv]
+package = false
