@@ -10,7 +10,7 @@ include $(HOME)/gitRepo/dotfiles/make/osm-country.mk
 
 .PHONY: \
 	install lock test \
-	clean clean-data clean-data-gpx cleanvenv \
+	clean clean-data clean-data-gpx \
 	gpx-input-check \
 	plotgpx compress extract boundary country osmextract docker docker-stop match filter trip gpx parse course help
 
@@ -31,9 +31,6 @@ clean-data:
 
 clean-data-gpx:
 	@find data -type f -name "*.gpx" -delete
-
-cleanvenv:
-	@rm -rf $(VENV_PATH)
 
 gpx-input-check:
 	@test -n "$(strip $(GPX_DIR))" || (echo "Error: GPX_DIR is required. Example: make parse GPX_DIR=/path/to/gpx-dir" >&2; exit 1)
@@ -141,7 +138,6 @@ help:
 	@echo "test            - run unit tests"
 	@echo "clean/clean-data - clear data/ directory"
 	@echo "clean-data-gpx  - clear *.gpx files in data/"
-	@echo "cleanvenv       - remove .venv"
 	@echo "country         - one-time download of country OSM PBF"
 	@echo "plotgpx GPX_DIR=... - plot original GPX"
 	@echo "compress GPX_DIR=... - compress GPX files"
