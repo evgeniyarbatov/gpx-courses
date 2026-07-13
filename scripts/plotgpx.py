@@ -1,7 +1,9 @@
-import sys
 import glob
-import gpxpy
 import os
+import sys
+
+import gpxpy
+
 
 def plot(gpx_files, title, gpx_plot_filename):
     import contextily as ctx
@@ -14,7 +16,7 @@ def plot(gpx_files, title, gpx_plot_filename):
     gdfs = []
 
     for idx, gpx_file in enumerate(gpx_files):
-        with open(gpx_file, "r") as f:
+        with open(gpx_file) as f:
             gpx = gpxpy.parse(f)
 
         lines = []
@@ -31,18 +33,14 @@ def plot(gpx_files, title, gpx_plot_filename):
 
     fig, ax = plt.subplots(figsize=(12, 10))
     for gdf, color in gdfs:
-        gdf.to_crs(epsg=3857).plot(
-            ax=ax, color=color, linewidth=5, label=gdf["name"].iloc[0]
-        )
+        gdf.to_crs(epsg=3857).plot(ax=ax, color=color, linewidth=5, label=gdf["name"].iloc[0])
 
     ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron, attribution=False)
 
     ax.set_aspect("equal", adjustable="datalim")
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.tick_params(
-        axis="both", which="both", bottom=False, top=False, left=False, right=False
-    )
+    ax.tick_params(axis="both", which="both", bottom=False, top=False, left=False, right=False)
 
     plt.legend()
     plt.tight_layout()

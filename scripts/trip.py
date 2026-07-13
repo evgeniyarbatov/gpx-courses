@@ -29,25 +29,17 @@ def _extract_trip_geometry(response):
         trip_data = response.json()
     except ValueError as exc:
         raise TripError(
-            "OSRM trip returned a non-JSON response "
-            f"(HTTP {response.status_code})."
+            f"OSRM trip returned a non-JSON response (HTTP {response.status_code})."
         ) from exc
 
     if response.status_code != 200:
-        code = (
-            trip_data.get("code", "Unknown")
-            if isinstance(trip_data, dict)
-            else "Unknown"
-        )
+        code = trip_data.get("code", "Unknown") if isinstance(trip_data, dict) else "Unknown"
         message = (
             trip_data.get("message", response.text)
             if isinstance(trip_data, dict)
             else response.text
         )
-        error_prefix = (
-            "OSRM trip request failed "
-            f"(HTTP {response.status_code}, code={code}): "
-        )
+        error_prefix = f"OSRM trip request failed (HTTP {response.status_code}, code={code}): "
         raise TripError(
             f"{error_prefix}{message}",
             code=code,
@@ -86,9 +78,7 @@ def _request_trip(df):
             f"Trip requires at least {MIN_TRIP_POINTS} points.",
         )
 
-    coords = ";".join(
-        f"{row.lon},{row.lat}" for row in df.itertuples(index=False)
-    )
+    coords = ";".join(f"{row.lon},{row.lat}" for row in df.itertuples(index=False))
 
     url = f"{OSRM_TRIP_URL}{coords}"
     params = {
@@ -175,8 +165,7 @@ def _split_chunk(df):
     right = ordered.iloc[split_index:].reset_index(drop=True)
     if len(left) < MIN_TRIP_POINTS or len(right) < MIN_TRIP_POINTS:
         raise TripError(
-            "Route split produced an invalid chunk with fewer than "
-            f"{MIN_TRIP_POINTS} points."
+            f"Route split produced an invalid chunk with fewer than {MIN_TRIP_POINTS} points."
         )
 
     return left, right
@@ -434,10 +423,9 @@ def _optimize_chunks_greedy(solved_chunks):
             for j in range(i + 1, len(merged_chunks)):
                 first_center = _chunk_centroid(merged_chunks[i]["source_df"])
                 second_center = _chunk_centroid(merged_chunks[j]["source_df"])
-                distance_sq = (
-                    (first_center[0] - second_center[0]) ** 2
-                    + (first_center[1] - second_center[1]) ** 2
-                )
+                distance_sq = (first_center[0] - second_center[0]) ** 2 + (
+                    first_center[1] - second_center[1]
+                ) ** 2
                 pair_candidates.append((distance_sq, i, j))
 
         pair_candidates.sort(key=lambda item: item[0])
@@ -522,9 +510,7 @@ def get_trip(df, trip_csv_file):
     source_points = sum(len(chunk["source_df"]) for chunk in optimized_chunks)
     used_points = sum(len(chunk["used_df"]) for chunk in optimized_chunks)
     dropped_points = source_points - used_points
-    passthrough_chunks = sum(
-        1 for chunk in optimized_chunks if not chunk.get("osrm_solved", True)
-    )
+    passthrough_chunks = sum(1 for chunk in optimized_chunks if not chunk.get("osrm_solved", True))
 
     if not optimized_chunks:
         raise TripError("OSRM did not produce any route chunks.")

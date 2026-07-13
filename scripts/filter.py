@@ -18,8 +18,7 @@ def _get_center(df, center_mode):
         return (df["lat"].mean(), df["lon"].mean())
 
     raise ValueError(
-        f"Unsupported center mode '{center_mode}'. "
-        f"Expected one of: {', '.join(CENTER_MODES)}."
+        f"Unsupported center mode '{center_mode}'. Expected one of: {', '.join(CENTER_MODES)}."
     )
 
 
@@ -76,14 +75,11 @@ def filter_by_center_distance(
 def _parse_args():
     parser = argparse.ArgumentParser(
         description=(
-            "Keep points furthest from route center first while enforcing "
-            "minimum spacing."
+            "Keep points furthest from route center first while enforcing minimum spacing."
         )
     )
     parser.add_argument("gpx_csv_file", nargs="?", default=DEFAULT_INPUT_CSV)
-    parser.add_argument(
-        "filtered_gpx_csv_file", nargs="?", default=DEFAULT_OUTPUT_CSV
-    )
+    parser.add_argument("filtered_gpx_csv_file", nargs="?", default=DEFAULT_OUTPUT_CSV)
     parser.add_argument(
         "--distance-meters",
         type=float,

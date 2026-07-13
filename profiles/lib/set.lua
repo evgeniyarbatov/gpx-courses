@@ -1,9 +1,9 @@
 -- Set of items
 -- Fast check for inclusion, but unordered.
--- 
+--
 -- Instead of having to do:
 -- whitelist = { 'apple'=true, 'cherries'=true, 'melons'=true }
--- 
+--
 -- you can do:
 -- whitelist = Set { 'apple', 'cherries', 'melons' }
 --

@@ -30,9 +30,7 @@ class MatchTests(unittest.TestCase):
         self.assertEqual(nodes, [])
 
     def test_get_nodes_flattens_waypoint_node_ids(self):
-        response = FakeResponse(
-            {"waypoints": [{"nodes": [101, 102]}, {"nodes": [103, 104]}]}
-        )
+        response = FakeResponse({"waypoints": [{"nodes": [101, 102]}, {"nodes": [103, 104]}]})
 
         with mock.patch("scripts.match.requests.get", return_value=response):
             nodes = match.get_nodes(21.0, 105.0)
@@ -115,9 +113,7 @@ class MatchTests(unittest.TestCase):
                 [[21.01, 105.01, [10]], [21.03, 105.03, [20, 30]]],
             ]
 
-            with mock.patch(
-                "scripts.match.get_matched_pair", side_effect=mocked_pairs
-            ):
+            with mock.patch("scripts.match.get_matched_pair", side_effect=mocked_pairs):
                 match.main(str(input_csv), str(output_csv))
 
             written = pd.read_csv(output_csv)

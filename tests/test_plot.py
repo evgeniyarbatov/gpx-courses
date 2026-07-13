@@ -57,9 +57,7 @@ class PlotTests(unittest.TestCase):
                 ]
             )
 
-            with mock.patch(
-                "scripts.plot.plt.subplots", return_value=(fake_figure, fake_axis)
-            ):
+            with mock.patch("scripts.plot.plt.subplots", return_value=(fake_figure, fake_axis)):
                 with mock.patch("scripts.plot.ctx.add_basemap") as mock_basemap:
                     with mock.patch("scripts.plot.plt.title") as mock_title:
                         with mock.patch("scripts.plot.plt.savefig") as mock_save:

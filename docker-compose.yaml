@@ -11,9 +11,9 @@ services:
     restart: unless-stopped
     command: >
       sh -c "
-      osrm-extract -p /profiles/foot.lua /data/gpx.osm.pbf && 
-      osrm-partition /data/gpx.osrm && 
-      osrm-customize /data/gpx.osrm && 
+      osrm-extract -p /profiles/foot.lua /data/gpx.osm.pbf &&
+      osrm-partition /data/gpx.osrm &&
+      osrm-customize /data/gpx.osrm &&
       osrm-routed \
       --algorithm mld \
       --max-matching-size 20000 \

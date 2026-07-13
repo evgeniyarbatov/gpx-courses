@@ -1,8 +1,7 @@
-import os
 import argparse
+import os
 
 import gpxpy
-
 import pandas as pd
 
 DEFAULT_GPX_DIR = "data/gpx_compressed"
@@ -15,7 +14,7 @@ def main(gpx_dir, csv_file):
     for filename in os.listdir(gpx_dir):
         if filename.endswith(".gpx"):
             filepath = os.path.join(gpx_dir, filename)
-            with open(filepath, "r") as gpx_file:
+            with open(filepath) as gpx_file:
                 gpx = gpxpy.parse(gpx_file)
                 for track in gpx.tracks:
                     for segment in track.segments:

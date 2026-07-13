@@ -53,11 +53,11 @@ function canonicalizeStringList(str)
   return str
 end
 
- 
- 
+
+
 -- debug helper
 local Debug = {}
- 
+
 -- helpers for sorting associative array
 function Debug.get_keys_sorted_by_value(tbl, sortFunction)
   local keys = {}
@@ -114,7 +114,7 @@ function Debug.register_tag_fetch(k)
 end
 
 function Debug.process_way(way,result)
-  
+
   -- setup result table
   result.road_classification = {}
   result.forward_speed = -1
@@ -122,7 +122,7 @@ function Debug.process_way(way,result)
   result.duration = 0
   result.forward_classes = {}
   result.backward_classes = {}
-  
+
   -- intercept tag functions normally provided via C++
   function way:get_value_by_key(k)
     Debug.register_tag_fetch(k)
@@ -131,10 +131,10 @@ function Debug.process_way(way,result)
   function way:get_location_tag(k)
     return nil
   end
-  
+
   -- reset tag counts
   Debug:reset_tag_fetch_counts()
-  
+
    -- call the way processsing function
   Debug.functions.process_way(Debug.profile,way,result)
 end

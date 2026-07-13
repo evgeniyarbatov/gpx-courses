@@ -10,8 +10,8 @@ from scripts.trip import (
     NO_TRIPS_CODE,
     TripError,
     _optimize_chunks,
-    _split_chunk,
     _select_retry_points,
+    _split_chunk,
     get_trip,
 )
 
@@ -73,15 +73,10 @@ class TripTests(unittest.TestCase):
                 "message": "No trip visiting all destinations possible.",
                 "code": NO_TRIPS_CODE,
             },
-            text=(
-                '{"message":"No trip visiting all destinations possible.",'
-                '"code":"NoTrips"}'
-            ),
+            text=('{"message":"No trip visiting all destinations possible.","code":"NoTrips"}'),
         )
 
-        with mock.patch(
-            "scripts.trip.requests.get", return_value=response
-        ) as mock_get:
+        with mock.patch("scripts.trip.requests.get", return_value=response) as mock_get:
             with tempfile.TemporaryDirectory() as tmpdir:
                 trip_csv = Path(tmpdir) / "trip.csv"
                 with self.assertLogs("scripts.trip", level="INFO") as logs:
@@ -96,9 +91,7 @@ class TripTests(unittest.TestCase):
         )
 
     def test_get_trip_raises_when_trips_missing(self):
-        df = pd.DataFrame(
-            [{"lat": 21.0, "lon": 105.0}, {"lat": 21.1, "lon": 105.1}]
-        )
+        df = pd.DataFrame([{"lat": 21.0, "lon": 105.0}, {"lat": 21.1, "lon": 105.1}])
         response = FakeResponse(200, {"code": "Ok"})
 
         with mock.patch("scripts.trip.requests.get", return_value=response):
@@ -122,24 +115,13 @@ class TripTests(unittest.TestCase):
                 "message": "No trip visiting all destinations possible.",
                 "code": NO_TRIPS_CODE,
             },
-            text=(
-                '{"message":"No trip visiting all destinations possible.",'
-                '"code":"NoTrips"}'
-            ),
+            text=('{"message":"No trip visiting all destinations possible.","code":"NoTrips"}'),
         )
 
-        geometry_left = polyline.encode(
-            [(21.0, 105.0), (21.0001, 105.0001)], precision=6
-        )
-        geometry_right = polyline.encode(
-            [(21.2, 105.2), (21.3, 105.3)], precision=6
-        )
-        left_response = FakeResponse(
-            200, {"code": "Ok", "trips": [{"geometry": geometry_left}]}
-        )
-        right_response = FakeResponse(
-            200, {"code": "Ok", "trips": [{"geometry": geometry_right}]}
-        )
+        geometry_left = polyline.encode([(21.0, 105.0), (21.0001, 105.0001)], precision=6)
+        geometry_right = polyline.encode([(21.2, 105.2), (21.3, 105.3)], precision=6)
+        left_response = FakeResponse(200, {"code": "Ok", "trips": [{"geometry": geometry_left}]})
+        right_response = FakeResponse(200, {"code": "Ok", "trips": [{"geometry": geometry_right}]})
 
         with tempfile.TemporaryDirectory() as tmpdir:
             trip_csv = Path(tmpdir) / "trip.csv"
@@ -164,24 +146,14 @@ class TripTests(unittest.TestCase):
             "source_df": pd.DataFrame(
                 [{"lat": 21.0, "lon": 105.0}, {"lat": 21.01, "lon": 105.01}]
             ),
-            "used_df": pd.DataFrame(
-                [{"lat": 21.0, "lon": 105.0}, {"lat": 21.01, "lon": 105.01}]
-            ),
-            "route_df": pd.DataFrame(
-                [{"lat": 21.0, "lon": 105.0}, {"lat": 21.01, "lon": 105.01}]
-            ),
+            "used_df": pd.DataFrame([{"lat": 21.0, "lon": 105.0}, {"lat": 21.01, "lon": 105.01}]),
+            "route_df": pd.DataFrame([{"lat": 21.0, "lon": 105.0}, {"lat": 21.01, "lon": 105.01}]),
             "retries": 0,
         }
         chunk_b = {
-            "source_df": pd.DataFrame(
-                [{"lat": 21.2, "lon": 105.2}, {"lat": 21.3, "lon": 105.3}]
-            ),
-            "used_df": pd.DataFrame(
-                [{"lat": 21.2, "lon": 105.2}, {"lat": 21.3, "lon": 105.3}]
-            ),
-            "route_df": pd.DataFrame(
-                [{"lat": 21.2, "lon": 105.2}, {"lat": 21.3, "lon": 105.3}]
-            ),
+            "source_df": pd.DataFrame([{"lat": 21.2, "lon": 105.2}, {"lat": 21.3, "lon": 105.3}]),
+            "used_df": pd.DataFrame([{"lat": 21.2, "lon": 105.2}, {"lat": 21.3, "lon": 105.3}]),
+            "route_df": pd.DataFrame([{"lat": 21.2, "lon": 105.2}, {"lat": 21.3, "lon": 105.3}]),
             "retries": 0,
         }
 

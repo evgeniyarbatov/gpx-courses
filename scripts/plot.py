@@ -1,8 +1,8 @@
 import sys
 
-import pandas as pd
-import matplotlib.pyplot as plt
 import contextily as ctx
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def make_plot(df, title, plot_filename):
@@ -10,9 +10,7 @@ def make_plot(df, title, plot_filename):
 
     lons, lats = df["lon"], df["lat"]
     ax.scatter(lons, lats, color="red", marker="o")
-    ctx.add_basemap(
-        ax, crs="EPSG:4326", source=ctx.providers.CartoDB.Positron, attribution=False
-    )
+    ctx.add_basemap(ax, crs="EPSG:4326", source=ctx.providers.CartoDB.Positron, attribution=False)
 
     ax.set_xlim(min(lons), max(lons))
     ax.set_ylim(min(lats), max(lats))
@@ -20,9 +18,7 @@ def make_plot(df, title, plot_filename):
     ax.set_aspect("equal", adjustable="datalim")
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.tick_params(
-        axis="both", which="both", bottom=False, top=False, left=False, right=False
-    )
+    ax.tick_params(axis="both", which="both", bottom=False, top=False, left=False, right=False)
 
     fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
     ax.margins(0)

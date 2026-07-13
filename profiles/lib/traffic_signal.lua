@@ -23,4 +23,3 @@ function TrafficSignal.get_value(node)
 end
 
 return TrafficSignal
-

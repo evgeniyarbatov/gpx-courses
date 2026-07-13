@@ -1,13 +1,11 @@
-import os
 import argparse
-import requests
+import os
 
 import pandas as pd
+import requests
 
 OSRM_URL = "http://localhost:6000/match/v1/foot/"
-OVERPASS_API_URL = os.getenv(
-    "OVERPASS_API_URL", "http://localhost:18080/api/interpreter"
-)
+OVERPASS_API_URL = os.getenv("OVERPASS_API_URL", "http://localhost:18080/api/interpreter")
 MATCH_RADIUS_METERS = 20
 DEFAULT_GPX_CSV = "data/gpx.csv"
 DEFAULT_MATCHED_CSV = "data/osm-gpx.csv"
@@ -18,7 +16,7 @@ def get_nodes(lat, lon):
     response.raise_for_status()
 
     data = response.json()
-    if not "waypoints" in data:
+    if "waypoints" not in data:
         return []
 
     waypoints = data["waypoints"]
@@ -34,16 +32,10 @@ def get_ways(nodes):
         out ids;
     """
 
-    response = requests.get(
-        OVERPASS_API_URL, params={"data": overpass_query}
-    )
+    response = requests.get(OVERPASS_API_URL, params={"data": overpass_query})
     data = response.json()
 
-    way_ids = [
-        element["id"]
-        for element in data.get("elements", [])
-        if element["type"] == "way"
-    ]
+    way_ids = [element["id"] for element in data.get("elements", []) if element["type"] == "way"]
     return way_ids
 
 
@@ -66,7 +58,7 @@ def get_matched_pair(coord1, coord2):
 
                 matched_coords.append([lat, lon, ways])
         return matched_coords
-    except requests.RequestException as e:
+    except requests.RequestException:
         return None
 
 
@@ -97,9 +89,7 @@ def main(csv_file, matched_csv_file):
 
     matched_df = pd.DataFrame(matched_data)
 
-    matched_df = matched_df.drop_duplicates(subset=["lat", "lon"]).reset_index(
-        drop=True
-    )
+    matched_df = matched_df.drop_duplicates(subset=["lat", "lon"]).reset_index(drop=True)
 
     matched_df.to_csv(matched_csv_file, index=False)
 

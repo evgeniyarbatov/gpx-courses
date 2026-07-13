@@ -1,7 +1,7 @@
 import argparse
 
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 
 DEFAULT_GPX_CSV = "data/gpx.csv"
 DEFAULT_BOUNDARY_POLY = "data/boundary.poly"
@@ -10,9 +10,7 @@ DEFAULT_BOUNDARY_POLY = "data/boundary.poly"
 def main(csv_file, boundary_file):
     df = pd.read_csv(csv_file)
 
-    gdf = gpd.GeoDataFrame(
-        df, geometry=gpd.points_from_xy(df.lon, df.lat), crs="EPSG:4326"
-    )
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat), crs="EPSG:4326")
 
     # Step 3: Project to meters (so buffer is accurate)
     gdf_meters = gdf.to_crs(epsg=3857)  # Web Mercator (meters)
