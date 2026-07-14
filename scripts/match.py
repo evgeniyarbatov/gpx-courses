@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import Any
 
 import pandas as pd
 import requests
@@ -7,12 +8,15 @@ import requests
 OSRM_URL = "http://localhost:6000/match/v1/foot/"
 OVERPASS_API_URL = os.getenv("OVERPASS_API_URL", "http://localhost:18080/api/interpreter")
 MATCH_RADIUS_METERS = 20
+REQUEST_TIMEOUT_SECONDS = 30
 DEFAULT_GPX_CSV = "data/gpx.csv"
 DEFAULT_MATCHED_CSV = "data/osm-gpx.csv"
 
 
-def get_nodes(lat, lon):
-    response = requests.get(f"http://127.0.0.1:6000/nearest/v1/foot/{lon},{lat}")
+def get_nodes(lat: float, lon: float) -> list[int]:
+    response = requests.get(
+        f"http://127.0.0.1:6000/nearest/v1/foot/{lon},{lat}", timeout=REQUEST_TIMEOUT_SECONDS
+    )
     response.raise_for_status()
 
     data = response.json()
@@ -23,7 +27,7 @@ def get_nodes(lat, lon):
     return [int(node) for wp in waypoints for node in wp["nodes"]]
 
 
-def get_ways(nodes):
+def get_ways(nodes: list[int]) -> list[int]:
     node_1, node_2 = nodes
     overpass_query = f"""
         [out:json];
@@ -32,23 +36,26 @@ def get_ways(nodes):
         out ids;
     """
 
-    response = requests.get(OVERPASS_API_URL, params={"data": overpass_query})
+    response = requests.get(
+        OVERPASS_API_URL, params={"data": overpass_query}, timeout=REQUEST_TIMEOUT_SECONDS
+    )
     data = response.json()
 
-    way_ids = [element["id"] for element in data.get("elements", []) if element["type"] == "way"]
-    return way_ids
+    return [element["id"] for element in data.get("elements", []) if element["type"] == "way"]
 
 
-def get_matched_pair(coord1, coord2):
+def get_matched_pair(
+    coord1: tuple[float, float], coord2: tuple[float, float]
+) -> list[list[Any]] | None:
     coords_str = f"{coord1[1]},{coord1[0]};{coord2[1]},{coord2[0]}"
     url = f"{OSRM_URL}{coords_str}?radiuses={MATCH_RADIUS_METERS};{MATCH_RADIUS_METERS}"
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         data = response.json()
 
-        matched_coords = []
+        matched_coords: list[list[Any]] = []
         if "tracepoints" in data:
             for tracepoint in data["tracepoints"]:
                 (lon, lat) = tracepoint["location"]
@@ -62,10 +69,10 @@ def get_matched_pair(coord1, coord2):
         return None
 
 
-def main(csv_file, matched_csv_file):
+def main(csv_file: str, matched_csv_file: str) -> None:
     df = pd.read_csv(csv_file)
 
-    matched_data = []
+    matched_data: list[dict[str, Any]] = []
     for i in range(len(df) - 1):
         lat1, lon1 = df.iloc[i]["lat"], df.iloc[i]["lon"]
         lat2, lon2 = df.iloc[i + 1]["lat"], df.iloc[i + 1]["lon"]

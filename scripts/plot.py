@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def make_plot(df, title, plot_filename):
+def make_plot(df: pd.DataFrame, title: str, plot_filename: str) -> None:
     fig, ax = plt.subplots(1, 1, figsize=(20, 10), dpi=300)
 
     lons, lats = df["lon"], df["lat"]
@@ -30,10 +30,10 @@ def make_plot(df, title, plot_filename):
 
 
 def main(
-    input_filename,
-    title,
-    plot_filename,
-):
+    input_filename: str,
+    title: str,
+    plot_filename: str,
+) -> None:
     df = pd.read_csv(input_filename)
     make_plot(df, title, plot_filename)
 

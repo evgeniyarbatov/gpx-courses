@@ -8,7 +8,7 @@ DEFAULT_TRIP_CSV = "data/trip.csv"
 DEFAULT_TRIP_GPX = "data/trip.gpx"
 
 
-def make_gpx(df, name, trip_gpx):
+def make_gpx(df: pd.DataFrame, name: str, trip_gpx: str) -> None:
     gpx = gpxpy.gpx.GPX()
 
     gpx.name = name
@@ -28,7 +28,7 @@ def make_gpx(df, name, trip_gpx):
         f.write(gpx.to_xml())
 
 
-def _route_output_path(base_gpx_path, route_id, route_count):
+def _route_output_path(base_gpx_path: Path, route_id: int, route_count: int) -> str:
     if route_count == 1:
         return str(base_gpx_path)
 
@@ -37,9 +37,9 @@ def _route_output_path(base_gpx_path, route_id, route_count):
     )
 
 
-def write_gpx_files(df, name, output_gpx_path):
+def write_gpx_files(df: pd.DataFrame, name: str, output_gpx_path: Path) -> list[str]:
     if "route_id" not in df.columns:
-        make_gpx(df, name, output_gpx_path)
+        make_gpx(df, name, str(output_gpx_path))
         return [str(output_gpx_path)]
 
     route_ids = sorted(int(route_id) for route_id in df["route_id"].unique())
@@ -55,10 +55,10 @@ def write_gpx_files(df, name, output_gpx_path):
 
 
 def main(
-    name,
-    trip_csv=DEFAULT_TRIP_CSV,
-    trip_gpx=DEFAULT_TRIP_GPX,
-):
+    name: str,
+    trip_csv: str = DEFAULT_TRIP_CSV,
+    trip_gpx: str = DEFAULT_TRIP_GPX,
+) -> None:
     df = pd.read_csv(trip_csv)
 
     output_paths = write_gpx_files(df, name, Path(trip_gpx))

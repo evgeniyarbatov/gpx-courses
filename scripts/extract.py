@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import Any
 
 import gpxpy
 import pandas as pd
@@ -8,8 +9,8 @@ DEFAULT_GPX_DIR = "data/gpx_compressed"
 DEFAULT_GPX_CSV = "data/gpx.csv"
 
 
-def main(gpx_dir, csv_file):
-    points = []
+def main(gpx_dir: str, csv_file: str) -> None:
+    points: list[dict[str, Any]] = []
 
     for filename in os.listdir(gpx_dir):
         if filename.endswith(".gpx"):
@@ -30,7 +31,7 @@ def main(gpx_dir, csv_file):
     df.to_csv(csv_file, index=False)
 
 
-def _parse_args():
+def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Extract lat/lon points from GPX files into a CSV."
     )

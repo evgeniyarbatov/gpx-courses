@@ -18,3 +18,14 @@ repos:
     rev: v1.15.0
     hooks:
       - id: mypy
+        args: ["--scripts-are-modules"]
+        additional_dependencies:
+          - pandas==3.0.3
+          - pandas-stubs==3.0.3.260530
+          - numpy==2.4.6
+          - types-geopandas==1.1.4.20260628
+          - types-shapely==2.1.0.20260630
+          - gpxpy==1.6.2
+          - matplotlib==3.11.0
+          - polyline==2.0.4
+          - requests==2.34.2

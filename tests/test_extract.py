@@ -20,7 +20,7 @@ SIMPLE_GPX = """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 
 
 class ExtractTests(unittest.TestCase):
-    def test_main_extracts_points_from_all_gpx_files(self):
+    def test_main_extracts_points_from_all_gpx_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             source_dir = Path(tmpdir) / "gpx"
             source_dir.mkdir(parents=True, exist_ok=True)
@@ -35,8 +35,9 @@ class ExtractTests(unittest.TestCase):
 
         self.assertEqual(list(written.columns), ["lat", "lon"])
         self.assertEqual(len(written), 4)
+        rows = zip(written["lat"].tolist(), written["lon"].tolist(), strict=True)
         self.assertEqual(
-            sorted((round(r.lat, 3), round(r.lon, 3)) for r in written.itertuples()),
+            sorted((round(lat, 3), round(lon, 3)) for lat, lon in rows),
             [(21.0, 105.0), (21.0, 105.0), (21.1, 105.1), (21.1, 105.1)],
         )
 

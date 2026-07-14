@@ -6,7 +6,7 @@ from scripts.boundary import main
 
 
 class BoundaryTests(unittest.TestCase):
-    def test_main_writes_poly_boundary_file(self):
+    def test_main_writes_poly_boundary_file(self) -> None:
         csv_content = "lat,lon\n21.0000,105.0000\n21.0100,105.0100\n21.0200,105.0050\n"
 
         with tempfile.TemporaryDirectory() as tmpdir:

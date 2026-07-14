@@ -5,7 +5,7 @@ import sys
 import gpxpy
 
 
-def plot(gpx_files, title, gpx_plot_filename):
+def plot(gpx_files: list[str], title: str, gpx_plot_filename: str) -> None:
     import contextily as ctx
     import geopandas as gpd
     import matplotlib.pyplot as plt
@@ -48,11 +48,8 @@ def plot(gpx_files, title, gpx_plot_filename):
     plt.savefig(gpx_plot_filename, dpi=300, bbox_inches="tight")
 
 
-def resolve_gpx_files(gpx_source):
-    if os.path.isdir(gpx_source):
-        gpx_pattern = os.path.join(gpx_source, "*.gpx")
-    else:
-        gpx_pattern = gpx_source
+def resolve_gpx_files(gpx_source: str) -> list[str]:
+    gpx_pattern = os.path.join(gpx_source, "*.gpx") if os.path.isdir(gpx_source) else gpx_source
 
     gpx_files = sorted(glob.glob(gpx_pattern))
     if not gpx_files:
@@ -61,10 +58,10 @@ def resolve_gpx_files(gpx_source):
 
 
 def main(
-    gpx_source,
-    title,
-    gpx_plot_filename,
-):
+    gpx_source: str,
+    title: str,
+    gpx_plot_filename: str,
+) -> None:
     gpx_files = resolve_gpx_files(gpx_source)
     plot(gpx_files, title, gpx_plot_filename)
 

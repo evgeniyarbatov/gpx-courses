@@ -1,4 +1,5 @@
 import argparse
+from typing import Any
 
 import pandas as pd
 from geopy.distance import geodesic
@@ -11,7 +12,7 @@ DEFAULT_INPUT_CSV = "data/osm-gpx.csv"
 DEFAULT_OUTPUT_CSV = "data/filtered-osm-gpx.csv"
 
 
-def _get_center(df, center_mode):
+def _get_center(df: pd.DataFrame, center_mode: str) -> tuple[float, float]:
     if center_mode == CENTER_MODE_MEDIAN:
         return (df["lat"].median(), df["lon"].median())
     if center_mode == CENTER_MODE_MEAN:
@@ -22,16 +23,20 @@ def _get_center(df, center_mode):
     )
 
 
-def _distance_to_center(point, center):
-    return geodesic(point, center).meters
+def _distance_to_center(point: tuple[float, float], center: tuple[float, float]) -> float:
+    return float(geodesic(point, center).meters)
+
+
+def _cell_as_float(value: Any) -> float:
+    return float(value)
 
 
 def filter_by_center_distance(
-    df,
-    min_distance_meters=FILTER_DISTANCE_METERS,
-    max_points=None,
-    center_mode=CENTER_MODE_MEDIAN,
-):
+    df: pd.DataFrame,
+    min_distance_meters: float = FILTER_DISTANCE_METERS,
+    max_points: int | None = None,
+    center_mode: str = CENTER_MODE_MEDIAN,
+) -> pd.DataFrame:
     if df.empty:
         return df.copy()
 
@@ -44,21 +49,24 @@ def filter_by_center_distance(
         df.index,
         key=lambda idx: (
             -_distance_to_center(
-                (df.at[idx, "lat"], df.at[idx, "lon"]),
+                (_cell_as_float(df.at[idx, "lat"]), _cell_as_float(df.at[idx, "lon"])),
                 center,
             ),
             idx,
         ),
     )
 
-    kept_indices = []
+    kept_indices: list[int] = []
 
     for idx in ranked_indices:
-        current_point = (df.at[idx, "lat"], df.at[idx, "lon"])
+        current_point = (_cell_as_float(df.at[idx, "lat"]), _cell_as_float(df.at[idx, "lon"]))
         too_close = False
 
         for kept_idx in kept_indices:
-            kept_point = (df.at[kept_idx, "lat"], df.at[kept_idx, "lon"])
+            kept_point = (
+                _cell_as_float(df.at[kept_idx, "lat"]),
+                _cell_as_float(df.at[kept_idx, "lon"]),
+            )
             if geodesic(current_point, kept_point).meters <= min_distance_meters:
                 too_close = True
                 break
@@ -72,7 +80,7 @@ def filter_by_center_distance(
     return df.loc[kept_indices].reset_index(drop=True)
 
 
-def _parse_args():
+def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Keep points furthest from route center first while enforcing minimum spacing."
@@ -102,12 +110,12 @@ def _parse_args():
 
 
 def main(
-    gpx_csv_file,
-    filtered_gpx_csv_file,
-    distance_meters=FILTER_DISTANCE_METERS,
-    max_points=None,
-    center_mode=CENTER_MODE_MEDIAN,
-):
+    gpx_csv_file: str,
+    filtered_gpx_csv_file: str,
+    distance_meters: float = FILTER_DISTANCE_METERS,
+    max_points: int | None = None,
+    center_mode: str = CENTER_MODE_MEDIAN,
+) -> None:
     df = pd.read_csv(gpx_csv_file)
 
     df = filter_by_center_distance(

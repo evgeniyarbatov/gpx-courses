@@ -1,9 +1,20 @@
 import argparse
 import logging
+from collections.abc import Iterator
+from typing import TypedDict
 
 import pandas as pd
 import polyline
 import requests
+
+
+class Chunk(TypedDict):
+    source_df: pd.DataFrame
+    used_df: pd.DataFrame
+    route_df: pd.DataFrame
+    retries: int
+    osrm_solved: bool
+
 
 OSRM_TRIP_URL = "http://localhost:6000/trip/v1/foot/"
 MIN_TRIP_POINTS = 2
@@ -18,13 +29,15 @@ logger = logging.getLogger(__name__)
 
 
 class TripError(RuntimeError):
-    def __init__(self, message, code=None, status_code=None):
+    def __init__(
+        self, message: str, code: str | None = None, status_code: int | None = None
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.status_code = status_code
 
 
-def _extract_trip_geometry(response):
+def _extract_trip_geometry(response: requests.Response) -> str:
     try:
         trip_data = response.json()
     except ValueError as exc:
@@ -66,13 +79,13 @@ def _extract_trip_geometry(response):
         raise TripError("OSRM trip response has an invalid trip payload.")
 
     encoded_geometry = first_trip.get("geometry")
-    if not encoded_geometry:
+    if not isinstance(encoded_geometry, str):
         raise TripError("OSRM trip response is missing geometry.")
 
     return encoded_geometry
 
 
-def _request_trip(df):
+def _request_trip(df: pd.DataFrame) -> str:
     if len(df) < MIN_TRIP_POINTS:
         raise TripError(
             f"Trip requires at least {MIN_TRIP_POINTS} points.",
@@ -92,16 +105,16 @@ def _request_trip(df):
     return _extract_trip_geometry(response)
 
 
-def _decode_geometry(encoded_geometry):
+def _decode_geometry(encoded_geometry: str) -> pd.DataFrame:
     coordinates = polyline.decode(encoded_geometry, precision=6)
     return pd.DataFrame(coordinates, columns=["lat", "lon"])
 
 
-def _passthrough_route(df):
+def _passthrough_route(df: pd.DataFrame) -> pd.DataFrame:
     return df[["lat", "lon"]].reset_index(drop=True)
 
 
-def _evenly_spaced_indices(total_count, target_count):
+def _evenly_spaced_indices(total_count: int, target_count: int) -> list[int]:
     if target_count >= total_count:
         return list(range(total_count))
     if target_count == 1:
@@ -110,8 +123,8 @@ def _evenly_spaced_indices(total_count, target_count):
     step = (total_count - 1) / (target_count - 1)
     raw_indices = [round(step * i) for i in range(target_count)]
 
-    unique_indices = []
-    seen = set()
+    unique_indices: list[int] = []
+    seen: set[int] = set()
     for idx in raw_indices:
         if idx not in seen:
             unique_indices.append(idx)
@@ -128,7 +141,7 @@ def _evenly_spaced_indices(total_count, target_count):
     return unique_indices
 
 
-def _select_retry_points(df, target_count):
+def _select_retry_points(df: pd.DataFrame, target_count: int) -> pd.DataFrame:
     if target_count >= len(df):
         return df
 
@@ -136,17 +149,17 @@ def _select_retry_points(df, target_count):
     return df.loc[keep_indices].reset_index(drop=True)
 
 
-def _next_retry_size(current_size):
+def _next_retry_size(current_size: int) -> int:
     reduced_size = int(current_size * RETRY_REDUCTION_RATIO)
     reduced_size = min(current_size - 1, reduced_size)
     return max(MIN_TRIP_POINTS, reduced_size)
 
 
-def _chunk_centroid(df):
+def _chunk_centroid(df: pd.DataFrame) -> tuple[float, float]:
     return (df["lat"].mean(), df["lon"].mean())
 
 
-def _split_chunk(df):
+def _split_chunk(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     if len(df) < MIN_CHUNK_SPLIT_POINTS:
         raise TripError(
             "Unable to split route chunk further while keeping at least "
@@ -171,7 +184,7 @@ def _split_chunk(df):
     return left, right
 
 
-def _try_chunk_downsampling(df):
+def _try_chunk_downsampling(df: pd.DataFrame) -> Chunk:
     attempt_df = df
     retries = 0
     min_allowed_points = max(
@@ -249,9 +262,9 @@ def _try_chunk_downsampling(df):
     )
 
 
-def _solve_chunks(df):
+def _solve_chunks(df: pd.DataFrame) -> list[Chunk]:
     pending_chunks = [df.reset_index(drop=True)]
-    solved_chunks = []
+    solved_chunks: list[Chunk] = []
 
     while pending_chunks:
         chunk_df = pending_chunks.pop(0)
@@ -297,14 +310,14 @@ def _solve_chunks(df):
     return solved_chunks
 
 
-def _combine_chunk_sources(solved_chunks, indices):
+def _combine_chunk_sources(solved_chunks: list[Chunk], indices: list[int]) -> pd.DataFrame:
     return pd.concat(
         [solved_chunks[idx]["source_df"] for idx in indices],
         ignore_index=True,
     )
 
 
-def _mask_indices(mask):
+def _mask_indices(mask: int) -> list[int]:
     indices = []
     idx = 0
     while mask:
@@ -315,7 +328,9 @@ def _mask_indices(mask):
     return indices
 
 
-def _solve_mask(mask, solved_chunks, cache):
+def _solve_mask(
+    mask: int, solved_chunks: list[Chunk], cache: dict[int, Chunk | None]
+) -> Chunk | None:
     if mask in cache:
         return cache[mask]
 
@@ -359,7 +374,7 @@ def _solve_mask(mask, solved_chunks, cache):
     return cache[mask]
 
 
-def _iter_submasks_including(mask, first_bit):
+def _iter_submasks_including(mask: int, first_bit: int) -> Iterator[int]:
     submask = mask
     while submask:
         if submask & first_bit:
@@ -367,16 +382,16 @@ def _iter_submasks_including(mask, first_bit):
         submask = (submask - 1) & mask
 
 
-def _optimize_chunks_exact(solved_chunks):
+def _optimize_chunks_exact(solved_chunks: list[Chunk]) -> list[Chunk]:
     chunk_count = len(solved_chunks)
     if chunk_count <= 1:
         return solved_chunks
 
     full_mask = (1 << chunk_count) - 1
-    cache = {}
-    best_partition = []
+    cache: dict[int, Chunk | None] = {}
+    best_partition: list[int] = []
 
-    def _search(remaining_mask, current_partition):
+    def _search(remaining_mask: int, current_partition: list[int]) -> None:
         nonlocal best_partition
         if remaining_mask == 0:
             if not best_partition or len(current_partition) < len(best_partition):
@@ -407,10 +422,15 @@ def _optimize_chunks_exact(solved_chunks):
         len(best_partition),
         chunk_count,
     )
-    return [_solve_mask(mask, solved_chunks, cache) for mask in best_partition]
+    resolved_chunks = []
+    for mask in best_partition:
+        solved = _solve_mask(mask, solved_chunks, cache)
+        assert solved is not None, "best_partition only contains previously-solved masks"
+        resolved_chunks.append(solved)
+    return resolved_chunks
 
 
-def _optimize_chunks_greedy(solved_chunks):
+def _optimize_chunks_greedy(solved_chunks: list[Chunk]) -> list[Chunk]:
     if len(solved_chunks) <= 1:
         return solved_chunks
 
@@ -418,7 +438,7 @@ def _optimize_chunks_greedy(solved_chunks):
     merged = True
     while merged and len(merged_chunks) > 1:
         merged = False
-        pair_candidates = []
+        pair_candidates: list[tuple[float, int, int]] = []
         for i in range(len(merged_chunks)):
             for j in range(i + 1, len(merged_chunks)):
                 first_center = _chunk_centroid(merged_chunks[i]["source_df"])
@@ -451,7 +471,7 @@ def _optimize_chunks_greedy(solved_chunks):
                 raise
 
             combined_route = _decode_geometry(encoded_geometry)
-            merged_chunk = {
+            merged_chunk: Chunk = {
                 "source_df": combined_source.reset_index(drop=True),
                 "used_df": combined_source.reset_index(drop=True),
                 "route_df": combined_route,
@@ -459,7 +479,7 @@ def _optimize_chunks_greedy(solved_chunks):
                 "osrm_solved": True,
             }
 
-            next_chunks = []
+            next_chunks: list[Chunk] = []
             for idx, chunk in enumerate(merged_chunks):
                 if idx in (first_idx, second_idx):
                     continue
@@ -476,7 +496,7 @@ def _optimize_chunks_greedy(solved_chunks):
     return merged_chunks
 
 
-def _optimize_chunks(solved_chunks):
+def _optimize_chunks(solved_chunks: list[Chunk]) -> list[Chunk]:
     if len(solved_chunks) <= MAX_EXACT_OPTIMIZATION_CHUNKS:
         return _optimize_chunks_exact(solved_chunks)
 
@@ -488,7 +508,7 @@ def _optimize_chunks(solved_chunks):
     return _optimize_chunks_greedy(solved_chunks)
 
 
-def _write_trip_csv(solved_chunks, trip_csv_file):
+def _write_trip_csv(solved_chunks: list[Chunk], trip_csv_file: str) -> None:
     output_frames = []
     for route_id, chunk in enumerate(solved_chunks, start=1):
         route_df = chunk["route_df"].copy()
@@ -499,7 +519,7 @@ def _write_trip_csv(solved_chunks, trip_csv_file):
     output_df.to_csv(trip_csv_file, index=False)
 
 
-def get_trip(df, trip_csv_file):
+def get_trip(df: pd.DataFrame, trip_csv_file: str) -> None:
     if df.empty:
         raise TripError("Trip input CSV has no points.")
 
@@ -538,9 +558,9 @@ def get_trip(df, trip_csv_file):
 
 
 def main(
-    gpx_csv_file,
-    trip_csv_file,
-):
+    gpx_csv_file: str,
+    trip_csv_file: str,
+) -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     df = pd.read_csv(gpx_csv_file)
 

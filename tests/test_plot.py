@@ -1,55 +1,58 @@
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest import mock
+
+import pandas as pd
 
 from scripts import plot
 
 
 class FakeAxis:
-    def __init__(self):
-        self.xlim = None
-        self.ylim = None
+    def __init__(self) -> None:
+        self.xlim: tuple[float, float] | None = None
+        self.ylim: tuple[float, float] | None = None
 
-    def scatter(self, *_args, **_kwargs):
+    def scatter(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
-    def set_xlim(self, left, right):
+    def set_xlim(self, left: float, right: float) -> None:
         self.xlim = (left, right)
 
-    def set_ylim(self, bottom, top):
+    def set_ylim(self, bottom: float, top: float) -> None:
         self.ylim = (bottom, top)
 
-    def set_aspect(self, *_args, **_kwargs):
+    def set_aspect(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
-    def set_xticks(self, *_args, **_kwargs):
+    def set_xticks(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
-    def set_yticks(self, *_args, **_kwargs):
+    def set_yticks(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
-    def tick_params(self, *_args, **_kwargs):
+    def tick_params(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
-    def margins(self, *_args, **_kwargs):
+    def margins(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
 
 class FakeFigure:
-    def subplots_adjust(self, *_args, **_kwargs):
+    def subplots_adjust(self, *_args: Any, **_kwargs: Any) -> None:
         return None
 
 
 class PlotTests(unittest.TestCase):
-    def test_make_plot_sets_bounds_and_saves_image(self):
+    def test_make_plot_sets_bounds_and_saves_image(self) -> None:
         fake_axis = FakeAxis()
         fake_figure = FakeFigure()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_plot = Path(tmpdir) / "plot.jpeg"
 
-            df = plot.pd.DataFrame(
+            df = pd.DataFrame(
                 [
                     {"lat": 21.0, "lon": 105.0},
                     {"lat": 21.2, "lon": 105.3},
@@ -57,12 +60,14 @@ class PlotTests(unittest.TestCase):
                 ]
             )
 
-            with mock.patch("scripts.plot.plt.subplots", return_value=(fake_figure, fake_axis)):
-                with mock.patch("scripts.plot.ctx.add_basemap") as mock_basemap:
-                    with mock.patch("scripts.plot.plt.title") as mock_title:
-                        with mock.patch("scripts.plot.plt.savefig") as mock_save:
-                            with mock.patch("scripts.plot.plt.close"):
-                                plot.make_plot(df, "Trip", str(output_plot))
+            with (
+                mock.patch("scripts.plot.plt.subplots", return_value=(fake_figure, fake_axis)),
+                mock.patch("scripts.plot.ctx.add_basemap") as mock_basemap,
+                mock.patch("scripts.plot.plt.title") as mock_title,
+                mock.patch("scripts.plot.plt.savefig") as mock_save,
+                mock.patch("scripts.plot.plt.close"),
+            ):
+                plot.make_plot(df, "Trip", str(output_plot))
 
         self.assertEqual(fake_axis.xlim, (105.0, 105.3))
         self.assertEqual(fake_axis.ylim, (21.0, 21.2))
@@ -70,7 +75,7 @@ class PlotTests(unittest.TestCase):
         mock_title.assert_called_once_with("Trip")
         mock_save.assert_called_once()
 
-    def test_main_reads_csv_and_delegates_to_make_plot(self):
+    def test_main_reads_csv_and_delegates_to_make_plot(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             input_csv = Path(tmpdir) / "points.csv"
             output_plot = Path(tmpdir) / "plot.jpeg"

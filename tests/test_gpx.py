@@ -9,7 +9,7 @@ from scripts.gpx import write_gpx_files
 
 
 class GpxTests(unittest.TestCase):
-    def test_write_single_route_file(self):
+    def test_write_single_route_file(self) -> None:
         df = pd.DataFrame(
             [
                 {"lat": 21.0, "lon": 105.0},
@@ -31,7 +31,7 @@ class GpxTests(unittest.TestCase):
             self.assertEqual(len(gpx.tracks[0].segments), 1)
             self.assertEqual(len(gpx.tracks[0].segments[0].points), 2)
 
-    def test_write_multi_route_files(self):
+    def test_write_multi_route_files(self) -> None:
         df = pd.DataFrame(
             [
                 {"lat": 21.0, "lon": 105.0, "route_id": 2},

@@ -7,13 +7,16 @@ from scripts.compress import _compress_one_file, main
 
 
 class CompressTests(unittest.TestCase):
-    def test_compress_one_file_invokes_gpsbabel_with_expected_args(self):
-        with mock.patch("scripts.compress.subprocess.run") as mock_run:
+    def test_compress_one_file_invokes_gpsbabel_with_expected_args(self) -> None:
+        with (
+            mock.patch("scripts.compress.shutil.which", return_value="/usr/bin/gpsbabel"),
+            mock.patch("scripts.compress.subprocess.run") as mock_run,
+        ):
             _compress_one_file(Path("src.gpx"), Path("dst.gpx"))
 
         mock_run.assert_called_once_with(
             [
-                "gpsbabel",
+                "/usr/bin/gpsbabel",
                 "-i",
                 "gpx",
                 "-f",
@@ -28,14 +31,20 @@ class CompressTests(unittest.TestCase):
             check=True,
         )
 
-    def test_main_raises_when_input_directory_has_no_gpx_files(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with self.assertRaises(SystemExit) as err:
-                main(tmpdir)
+    def test_compress_one_file_raises_when_gpsbabel_missing(self) -> None:
+        with (
+            mock.patch("scripts.compress.shutil.which", return_value=None),
+            self.assertRaises(SystemExit),
+        ):
+            _compress_one_file(Path("src.gpx"), Path("dst.gpx"))
+
+    def test_main_raises_when_input_directory_has_no_gpx_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir, self.assertRaises(SystemExit) as err:
+            main(tmpdir)
 
         self.assertIn("No .gpx files found", str(err.exception))
 
-    def test_main_processes_all_gpx_files_in_sorted_order(self):
+    def test_main_processes_all_gpx_files_in_sorted_order(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             source_dir = Path(tmpdir) / "input"
             output_dir = Path(tmpdir) / "out"

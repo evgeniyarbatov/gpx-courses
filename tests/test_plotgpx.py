@@ -6,7 +6,7 @@ from scripts.plotgpx import resolve_gpx_files
 
 
 class PlotGpxTests(unittest.TestCase):
-    def test_resolve_gpx_files_from_directory(self):
+    def test_resolve_gpx_files_from_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
             (base / "b.gpx").write_text("<gpx/>", encoding="utf-8")
@@ -18,7 +18,7 @@ class PlotGpxTests(unittest.TestCase):
                 [str(base / "a.gpx"), str(base / "b.gpx")],
             )
 
-    def test_resolve_gpx_files_from_glob_pattern(self):
+    def test_resolve_gpx_files_from_glob_pattern(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
             (base / "trip-route-02.gpx").write_text("<gpx/>", encoding="utf-8")
@@ -29,7 +29,7 @@ class PlotGpxTests(unittest.TestCase):
                 [str(base / "trip-route-01.gpx"), str(base / "trip-route-02.gpx")],
             )
 
-    def test_resolve_gpx_files_raises_for_empty_result(self):
+    def test_resolve_gpx_files_raises_for_empty_result(self) -> None:
         with self.assertRaises(ValueError):
             resolve_gpx_files("data/does-not-exist/*.gpx")
 

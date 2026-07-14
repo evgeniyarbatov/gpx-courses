@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest import mock
 
 import pandas as pd
@@ -10,26 +11,26 @@ from scripts import match
 
 
 class FakeResponse:
-    def __init__(self, payload, status_code=200):
+    def __init__(self, payload: dict[str, Any], status_code: int = 200) -> None:
         self._payload = payload
         self.status_code = status_code
 
-    def json(self):
+    def json(self) -> dict[str, Any]:
         return self._payload
 
-    def raise_for_status(self):
+    def raise_for_status(self) -> None:
         if self.status_code >= 400:
             raise requests.HTTPError(f"HTTP {self.status_code}")
 
 
 class MatchTests(unittest.TestCase):
-    def test_get_nodes_returns_empty_when_waypoints_missing(self):
+    def test_get_nodes_returns_empty_when_waypoints_missing(self) -> None:
         with mock.patch("scripts.match.requests.get", return_value=FakeResponse({})):
             nodes = match.get_nodes(21.0, 105.0)
 
         self.assertEqual(nodes, [])
 
-    def test_get_nodes_flattens_waypoint_node_ids(self):
+    def test_get_nodes_flattens_waypoint_node_ids(self) -> None:
         response = FakeResponse({"waypoints": [{"nodes": [101, 102]}, {"nodes": [103, 104]}]})
 
         with mock.patch("scripts.match.requests.get", return_value=response):
@@ -37,7 +38,7 @@ class MatchTests(unittest.TestCase):
 
         self.assertEqual(nodes, [101, 102, 103, 104])
 
-    def test_get_ways_returns_only_way_ids(self):
+    def test_get_ways_returns_only_way_ids(self) -> None:
         response = FakeResponse(
             {
                 "elements": [
@@ -54,7 +55,7 @@ class MatchTests(unittest.TestCase):
         self.assertEqual(way_ids, [222, 333])
         self.assertEqual(mock_get.call_args.kwargs["params"].keys(), {"data"})
 
-    def test_get_matched_pair_returns_none_on_request_failure(self):
+    def test_get_matched_pair_returns_none_on_request_failure(self) -> None:
         with mock.patch(
             "scripts.match.requests.get",
             side_effect=requests.RequestException("boom"),
@@ -63,7 +64,7 @@ class MatchTests(unittest.TestCase):
 
         self.assertIsNone(matched)
 
-    def test_get_matched_pair_resolves_tracepoints_to_way_ids(self):
+    def test_get_matched_pair_resolves_tracepoints_to_way_ids(self) -> None:
         response = FakeResponse(
             {
                 "tracepoints": [
@@ -73,16 +74,18 @@ class MatchTests(unittest.TestCase):
             }
         )
 
-        with mock.patch("scripts.match.requests.get", return_value=response):
-            with mock.patch(
+        with (
+            mock.patch("scripts.match.requests.get", return_value=response),
+            mock.patch(
                 "scripts.match.get_nodes",
                 side_effect=[[1, 2], [3, 4]],
-            ) as mock_nodes:
-                with mock.patch(
-                    "scripts.match.get_ways",
-                    side_effect=[[1001], [1002, 1003]],
-                ) as mock_ways:
-                    matched = match.get_matched_pair((21.0, 105.0), (21.1, 105.1))
+            ) as mock_nodes,
+            mock.patch(
+                "scripts.match.get_ways",
+                side_effect=[[1001], [1002, 1003]],
+            ) as mock_ways,
+        ):
+            matched = match.get_matched_pair((21.0, 105.0), (21.1, 105.1))
 
         self.assertEqual(
             matched,
@@ -94,7 +97,7 @@ class MatchTests(unittest.TestCase):
         self.assertEqual(mock_nodes.call_count, 2)
         self.assertEqual(mock_ways.call_count, 2)
 
-    def test_main_writes_deduplicated_points_with_non_empty_ways(self):
+    def test_main_writes_deduplicated_points_with_non_empty_ways(self) -> None:
         df = pd.DataFrame(
             [
                 {"lat": 21.0, "lon": 105.0},
@@ -120,8 +123,9 @@ class MatchTests(unittest.TestCase):
 
         self.assertEqual(list(written.columns), ["lat", "lon", "ways"])
         self.assertEqual(len(written), 2)
+        rows = zip(written["lat"].tolist(), written["lon"].tolist(), strict=True)
         self.assertEqual(
-            sorted((round(r.lat, 2), round(r.lon, 2)) for r in written.itertuples()),
+            sorted((round(lat, 2), round(lon, 2)) for lat, lon in rows),
             [(21.01, 105.01), (21.03, 105.03)],
         )
 

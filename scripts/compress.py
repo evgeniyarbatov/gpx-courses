@@ -1,14 +1,19 @@
 import argparse
+import shutil
 import subprocess
 from pathlib import Path
 
 DEFAULT_COMPRESSED_GPX_DIR = Path("data/gpx_compressed")
 
 
-def _compress_one_file(source_path, target_path):
-    subprocess.run(
+def _compress_one_file(source_path: Path, target_path: Path) -> None:
+    gpsbabel_path = shutil.which("gpsbabel")
+    if gpsbabel_path is None:
+        raise SystemExit("gpsbabel not found on PATH")
+
+    subprocess.run(  # noqa: S603
         [
-            "gpsbabel",
+            gpsbabel_path,
             "-i",
             "gpx",
             "-f",
@@ -24,7 +29,9 @@ def _compress_one_file(source_path, target_path):
     )
 
 
-def main(input_gpx_dir, output_gpx_dir=DEFAULT_COMPRESSED_GPX_DIR):
+def main(
+    input_gpx_dir: str | Path, output_gpx_dir: str | Path = DEFAULT_COMPRESSED_GPX_DIR
+) -> None:
     source_dir = Path(input_gpx_dir)
     output_dir = Path(output_gpx_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
