@@ -25,6 +25,7 @@ Build a clean course GPX from raw activity traces by:
 ## Key Makefile variables
 - `GPX_DIR` (required for `make plotgpx` and `make parse`)
 - `NAME` (required for `make gpx` / `make course`)
+- `DATA_DIR` — where all generated files go, default `~/data/gpx-courses`. Override the whole path with `DATA_DIR=/tmp/run-42`, or just the root with `DATA_ROOT=/path` (keeps the `gpx-courses` suffix).
 
 Example override:
 `make parse GPX_DIR=$HOME/Documents/gpx/bavi`
@@ -44,29 +45,33 @@ Example override:
    `make course NAME="Ba Vi"`
 
 Optional filter tuning (script-level):
-`./.venv/bin/python scripts/filter.py data/osm-gpx.csv data/filtered-osm-gpx.csv --distance-meters 80 --max-points 500 --center-mode median`
+`./.venv/bin/python scripts/filter.py $DATA_DIR/osm-gpx.csv $DATA_DIR/filtered-osm-gpx.csv --distance-meters 80 --max-points 500 --center-mode median`
+
+## Generated data
+All pipeline outputs and the clipped `osm/` extract are written under `$(DATA_DIR)`, default `~/data/gpx-courses` — nothing is written inside the repo working tree. Override per-invocation with `make <target> DATA_ROOT=/path` (keeps the `gpx-courses` suffix) or `make <target> DATA_DIR=/exact/path`.
 
 ## Makefile target map
 - `make parse`: runs `compress -> extract -> boundary -> osmextract`
 - `make course`: runs `match -> filter -> trip -> gpx`
-- `make clean-data`: clears generated files under `data/` except `data/.gitignore`
-- `make clean-data-gpx`: removes only generated `*.gpx` files under `data/`
-- `make plotgpx`: plots raw GPX files from `GPX_DIR` into `data/original-gpx.jpeg`
+- `make clean-data`: clears generated files under `$(DATA_DIR)`
+- `make clean-data-gpx`: removes only generated `*.gpx` files under `$(DATA_DIR)`
+- `make plotgpx`: plots raw GPX files from `GPX_DIR` into `$(DATA_DIR)/original-gpx.jpeg`
 
 ## Main outputs
-- `data/gpx.csv`: flattened points from compressed source GPX files
-- `data/boundary.poly`: buffered convex hull used for OSM clipping
-- `data/osm-gpx.csv`: matched points with OSM way IDs
-- `data/filtered-osm-gpx.csv`: spacing-filtered points
-- `data/trip.csv`: route geometry with `route_id`
-- `data/trip.gpx` (single-route case) or `data/trip-route-*.gpx` (multi-route case)
-- `data/simplified-trip.gpx` or `data/simplified-trip-route-*.gpx` (post-`gpsbabel` simplified outputs)
+All paths below are relative to `$(DATA_DIR)` (default `~/data/gpx-courses`):
+- `gpx.csv`: flattened points from compressed source GPX files
+- `boundary.poly`: buffered convex hull used for OSM clipping
+- `osm-gpx.csv`: matched points with OSM way IDs
+- `filtered-osm-gpx.csv`: spacing-filtered points
+- `trip.csv`: route geometry with `route_id`
+- `trip.gpx` (single-route case) or `trip-route-*.gpx` (multi-route case)
+- `simplified-trip.gpx` or `simplified-trip-route-*.gpx` (post-`gpsbabel` simplified outputs)
 - plots:
-  - `data/original-gpx.jpeg`
-  - `data/simplified-gpx.jpeg`
-  - `data/osm-match.jpeg`
-  - `data/osm-filter.jpeg`
-  - `data/trip-gpx.jpeg`
+  - `original-gpx.jpeg`
+  - `simplified-gpx.jpeg`
+  - `osm-match.jpeg`
+  - `osm-filter.jpeg`
+  - `trip-gpx.jpeg`
 
 ## Scripts
 
@@ -101,12 +106,12 @@ Optional filter tuning (script-level):
 
 ### `scripts/gpx.py`
 - Converts trip CSV to GPX track(s).
-- Single route: writes the requested output path (usually `data/trip.gpx`).
-- Multiple routes: writes numbered files like `data/trip-route-01.gpx`, `data/trip-route-02.gpx`, etc.
+- Single route: writes the requested output path (usually `$DATA_DIR/trip.gpx`).
+- Multiple routes: writes numbered files like `$DATA_DIR/trip-route-01.gpx`, `$DATA_DIR/trip-route-02.gpx`, etc.
 
 ### `scripts/plot.py`
 - Plots CSV points on CartoDB Positron basemap and saves image.
 
 ### `scripts/plotgpx.py`
-- Accepts either a directory or a glob pattern (for example `data/trip-route-*.gpx`).
+- Accepts either a directory or a glob pattern (for example `$DATA_DIR/trip-route-*.gpx`).
 - Plots one or more GPX tracks on a shared basemap and saves image.

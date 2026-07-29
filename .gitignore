@@ -3,3 +3,7 @@ __pycache__/
 .venv
 .ipynb_checkpoints/
 .venv/
+/data/*
+!/data/.gitignore
+/osm/*
+!/osm/.gitignore

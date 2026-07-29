@@ -1,10 +1,15 @@
 # Uses uv (https://docs.astral.sh/uv) for dependency management — uv sync creates/updates .venv; run commands via uv run, no manual activation.
+DATA_ROOT ?= $(HOME)/data
+REPO_NAME := $(notdir $(CURDIR))
+DATA_DIR  ?= $(DATA_ROOT)/$(REPO_NAME)
+
 VENV_PATH := .venv
 
 GPX_DIR ?=
 NAME ?=
 
-OSM_DIR := osm
+# Set before the dotfiles include: osm-country.mk uses OSM_DIR ?=, so this earlier assignment wins.
+OSM_DIR := $(DATA_DIR)/osm
 OSM_URL := https://download.geofabrik.de/asia/vietnam-latest.osm.pbf
 
 DOTFILES_MK := $(HOME)/gitRepo/dotfiles/make/osm-country.mk
@@ -40,38 +45,41 @@ test: install
 clean: clean-data
 
 clean-data:
-	@find data -mindepth 1 ! -name ".gitignore" -delete
-	@echo "Cleaned data directory (preserved data/.gitignore)."
+	@[ -d "$(DATA_DIR)" ] && find $(DATA_DIR) -mindepth 1 -delete || true
+	@echo "Cleaned $(DATA_DIR)."
 
 clean-data-gpx:
-	@find data -type f -name "*.gpx" -delete
+	@[ -d "$(DATA_DIR)" ] && find $(DATA_DIR) -type f -name "*.gpx" -delete || true
 
 gpx-input-check:
 	@test -n "$(strip $(GPX_DIR))" || (echo "Error: GPX_DIR is required. Example: make parse GPX_DIR=/path/to/gpx-dir" >&2; exit 1)
 	@test -d "$(GPX_DIR)" || (echo "Error: GPX_DIR does not exist: $(GPX_DIR)" >&2; exit 1)
 
 plotgpx: install gpx-input-check
+	@mkdir -p $(DATA_DIR)
 	@uv run python scripts/plotgpx.py \
 	$(GPX_DIR) \
 	"Original GPX" \
-	data/original-gpx.jpeg
+	$(DATA_DIR)/original-gpx.jpeg
 
 compress: install gpx-input-check clean-data-gpx
-	@uv run python scripts/compress.py "$(GPX_DIR)"
+	@uv run python scripts/compress.py "$(GPX_DIR)" --output-dir $(DATA_DIR)/gpx_compressed
 
 extract: install
-	@uv run python scripts/extract.py
+	@mkdir -p $(DATA_DIR)
+	@uv run python scripts/extract.py $(DATA_DIR)/gpx_compressed $(DATA_DIR)/gpx.csv
 	@uv run python scripts/plotgpx.py \
-	data/gpx_compressed \
+	$(DATA_DIR)/gpx_compressed \
 	"Simplified GPX" \
-	data/simplified-gpx.jpeg
+	$(DATA_DIR)/simplified-gpx.jpeg
 
 boundary: install
-	@uv run python scripts/boundary.py
+	@mkdir -p $(DATA_DIR)
+	@uv run python scripts/boundary.py $(DATA_DIR)/gpx.csv $(DATA_DIR)/boundary.poly
 
 osmextract:
 	@mkdir -p $(OSM_DIR)/foot $(OSM_DIR)/overpass-api
-	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=data/boundary.poly -o=$(OSM_DIR)/foot/gpx.osm.pbf
+	@osmconvert $(OSM_DIR)/$(COUNTRY_OSM_FILE) -B=$(DATA_DIR)/boundary.poly -o=$(OSM_DIR)/foot/gpx.osm.pbf
 	@osmium cat --overwrite $(OSM_DIR)/foot/gpx.osm.pbf -o $(OSM_DIR)/gpx.osm
 	@bzip2 -c $(OSM_DIR)/gpx.osm > $(OSM_DIR)/overpass-api/gpx.osm.bz2
 
@@ -97,47 +105,51 @@ docker-stop:
 
 match: install
 	@echo "Matching..."
-	@uv run python scripts/match.py
+	@mkdir -p $(DATA_DIR)
+	@uv run python scripts/match.py $(DATA_DIR)/gpx.csv $(DATA_DIR)/osm-gpx.csv
 	@uv run python scripts/plot.py \
-	data/osm-gpx.csv \
+	$(DATA_DIR)/osm-gpx.csv \
 	"OSRM-Matched Points with OSM Way IDs" \
-	data/osm-match.jpeg
+	$(DATA_DIR)/osm-match.jpeg
 
 filter: install
 	@echo "Filtering..."
-	@uv run python scripts/filter.py
+	@mkdir -p $(DATA_DIR)
+	@uv run python scripts/filter.py $(DATA_DIR)/osm-gpx.csv $(DATA_DIR)/filtered-osm-gpx.csv
 	@uv run python scripts/plot.py \
-	data/filtered-osm-gpx.csv \
+	$(DATA_DIR)/filtered-osm-gpx.csv \
 	"Center-Distance Filtered Match Points" \
-	data/osm-filter.jpeg
+	$(DATA_DIR)/osm-filter.jpeg
 
 trip: install
 	@echo "Making trip..."
-	@uv run python scripts/trip.py
+	@mkdir -p $(DATA_DIR)
+	@uv run python scripts/trip.py $(DATA_DIR)/filtered-osm-gpx.csv $(DATA_DIR)/trip.csv
 	@uv run python scripts/plot.py \
-	data/trip.csv \
+	$(DATA_DIR)/trip.csv \
 	"OSRM Trip Route (CSV Output)" \
-	data/trip-gpx.jpeg
+	$(DATA_DIR)/trip-gpx.jpeg
 
 gpx: install
 	@test -n "$(strip $(NAME))" || (echo "Error: NAME is required. Example: make gpx NAME=\"Soc Son\"" >&2; exit 1)
 	@echo "Writing GPX..."
-	@uv run python scripts/gpx.py "$(NAME)"
-	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
-		for file in data/trip-route-*.gpx; do \
+	@mkdir -p $(DATA_DIR)
+	@uv run python scripts/gpx.py "$(NAME)" $(DATA_DIR)/trip.csv $(DATA_DIR)/trip.gpx
+	@if ls $(DATA_DIR)/trip-route-*.gpx >/dev/null 2>&1; then \
+		for file in $(DATA_DIR)/trip-route-*.gpx; do \
 			gpsbabel -i gpx -f "$$file" \
 			-x simplify,crosstrack,error=0.01k \
-			-o gpx -F "data/simplified-$$(basename $$file)"; \
+			-o gpx -F "$(DATA_DIR)/simplified-$$(basename $$file)"; \
 		done; \
 	else \
-		gpsbabel -i gpx -f data/trip.gpx \
+		gpsbabel -i gpx -f $(DATA_DIR)/trip.gpx \
 		-x simplify,crosstrack,error=0.01k \
-		-o gpx -F data/simplified-trip.gpx; \
+		-o gpx -F $(DATA_DIR)/simplified-trip.gpx; \
 	fi
-	@if ls data/trip-route-*.gpx >/dev/null 2>&1; then \
-		uv run python scripts/plotgpx.py "data/trip-route-*.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
+	@if ls $(DATA_DIR)/trip-route-*.gpx >/dev/null 2>&1; then \
+		uv run python scripts/plotgpx.py "$(DATA_DIR)/trip-route-*.gpx" "Generated Trip GPX Routes" $(DATA_DIR)/trip-gpx.jpeg; \
 	else \
-		uv run python scripts/plotgpx.py "data/trip.gpx" "Generated Trip GPX Routes" data/trip-gpx.jpeg; \
+		uv run python scripts/plotgpx.py "$(DATA_DIR)/trip.gpx" "Generated Trip GPX Routes" $(DATA_DIR)/trip-gpx.jpeg; \
 	fi
 
 parse: compress extract boundary osmextract
@@ -150,8 +162,8 @@ help:
 	@echo "install         - uv sync deps"
 	@echo "lock            - refresh uv.lock"
 	@echo "test            - run unit tests"
-	@echo "clean/clean-data - clear data/ directory"
-	@echo "clean-data-gpx  - clear *.gpx files in data/"
+	@echo "clean/clean-data - clear \$$(DATA_DIR) (default: ~/data/gpx-courses)"
+	@echo "clean-data-gpx  - clear *.gpx files in \$$(DATA_DIR)"
 	@echo "country         - one-time download of country OSM PBF"
 	@echo "plotgpx GPX_DIR=... - plot original GPX"
 	@echo "compress GPX_DIR=... - compress GPX files"
@@ -162,3 +174,6 @@ help:
 	@echo "match/filter/trip/gpx - course pipeline stages"
 	@echo "parse           - compress + extract + boundary + osmextract"
 	@echo "course NAME=... - match + filter + trip + gpx"
+	@echo ""
+	@echo "Generated data goes to \$$(DATA_DIR), default ~/data/gpx-courses."
+	@echo "Override with DATA_ROOT=/path (keeps repo-name suffix) or DATA_DIR=/exact/path."
