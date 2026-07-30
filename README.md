@@ -44,6 +44,9 @@ Example override:
 6. Build final course GPX:
    `make course NAME="Ba Vi"`
 
+Steps 4-6 can be run in one go once `make country` has been done once:
+`make run GPX_DIR=$HOME/Documents/gpx/bavi NAME="Ba Vi"`
+
 Optional filter tuning (script-level):
 `./.venv/bin/python scripts/filter.py $DATA_DIR/osm-gpx.csv $DATA_DIR/filtered-osm-gpx.csv --distance-meters 80 --max-points 500 --center-mode median`
 

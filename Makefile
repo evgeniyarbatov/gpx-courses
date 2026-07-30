@@ -31,7 +31,7 @@ endif
 	install lock test \
 	clean clean-data clean-data-gpx \
 	gpx-input-check \
-	plotgpx compress extract boundary country osmextract docker docker-stop match filter trip gpx parse course help
+	plotgpx compress extract boundary country osmextract docker docker-stop match filter trip gpx parse course run help
 
 install:
 	@uv sync
@@ -158,6 +158,11 @@ parse: compress extract boundary osmextract
 course: match filter trip gpx
 	@echo "Course route complete."
 
+# Entry point: full pipeline (assumes `make country` was already run once).
+# Usage: make run GPX_DIR=/path/to/gpx-dir NAME="Course Name"
+run: parse docker course
+	@echo "Run complete."
+
 help:
 	@echo "install         - uv sync deps"
 	@echo "lock            - refresh uv.lock"
@@ -174,6 +179,7 @@ help:
 	@echo "match/filter/trip/gpx - course pipeline stages"
 	@echo "parse           - compress + extract + boundary + osmextract"
 	@echo "course NAME=... - match + filter + trip + gpx"
+	@echo "run GPX_DIR=... NAME=... - entry point: parse + docker + course (after one-time 'make country')"
 	@echo ""
 	@echo "Generated data goes to \$$(DATA_DIR), default ~/data/gpx-courses."
 	@echo "Override with DATA_ROOT=/path (keeps repo-name suffix) or DATA_DIR=/exact/path."

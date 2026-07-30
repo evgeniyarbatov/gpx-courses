@@ -14,6 +14,7 @@ Builds a clean course GPX from raw activity traces: simplify source GPX → clip
 - `make parse GPX_DIR=/path/to/gpx` — runs `compress → extract → boundary → osmextract`
 - `make docker` — starts colima (if not already running) and brings up OSRM + Overpass via compose; detects whether colima's active runtime is `docker` or `containerd` and dispatches to `docker compose` or `colima nerdctl -- compose` accordingly
 - `make course NAME="Ba Vi"` — runs `match → filter → trip → gpx`
+- `make run GPX_DIR=/path/to/gpx NAME="Ba Vi"` — entry point: `parse → docker → course` (after one-time `make country`)
 - `make clean-data` / `make clean-data-gpx` — clear `$(DATA_DIR)` (all generated files, or just `*.gpx`)
 - `DATA_DIR` — where all generated files (and the clipped `osm/` extract) go, default `~/data/gpx-courses`; override with `DATA_ROOT=` or `DATA_DIR=`
 
