@@ -1,0 +1,2 @@
+- Setup has six external prerequisites beyond Python (gpsbabel, osmconvert, osmium, wget, bzip2, colima+docker/nerdctl) with no single bootstrap command shown in the README head — worth checking whether `make install` actually installs these or if it's still a manual checklist, since that's the main friction point for "fast to run."
+- No tests or CI despite this being a multi-stage pipeline (simplify → clip → match → filter → generate → export) where a bug in an early stage silently corrupts everything downstream.
