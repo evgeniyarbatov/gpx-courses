@@ -12,8 +12,3 @@ Once the external-tool bootstrap is streamlined and the pipeline has even one go
 
 Matching noisy GPS traces to authoritative map data (OSRM + Overpass) reliably — a core competency that most of the other GPX/routing repos in this portfolio depend on without owning the matching logic themselves.
 
-## Connects to
-
-- [private]
-- **[private]**, [private], **[private]** — race-prep repos that need exactly this "raw trace → clean course" step, currently each solving it ad hoc or not at all.
-- **[private]** — the natural quality check for the OSRM matching this pipeline depends on.
